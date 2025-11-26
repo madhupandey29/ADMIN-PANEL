@@ -1,0 +1,14 @@
+{
+    "typescript.autoClosingTags": false,
+    "kiroAgent.trustedCommands": [
+        "$content = Get-Content \"src/app/seo/page.tsx\" -Raw; $lines = $content -split \"`n\"; Write-Host \"Total lines: $($lines.Count)\"; Write-Host \"Last 5 lines:\"; $lines[-5..-1] | ForEach-Object { Write-Host $_ }",
+        "Get-Content \"src/app/seo/page.tsx\" | Measure-Object -Line",
+        "Get-Content \"src/app/seo/page.tsx\" | Select-Object -Last 50",
+        "$content = Get-Content \"src/app/seo/page.tsx\" -Raw; $lines = $content -split \"`n\"; Write-Host \"Total lines: $($lines.Count)\"; $lines.Count",
+        "$content = Get-Content \"src/app/seo/page.tsx\" -Raw; $content.Length",
+        "Write-Output \"SEO Management - All errors fixed and UI enhanced successfully!\"",
+        "if (Test-Path .next) { Remove-Item -Recurse -Force .next }",
+        "npm run dev",
+        "Get-Content \"src/app/orders/page.tsx\" | Select-String -Pattern \"Under Construction\" -Context 5,5"
+    ]
+}
