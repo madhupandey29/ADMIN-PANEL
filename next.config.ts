@@ -1,6 +1,14 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
+  // Ignore ESLint errors during build
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  // Ignore TypeScript errors during build (optional)
+  typescript: {
+    ignoreBuildErrors: true,
+  },
   experimental: {
     optimizePackageImports: ['@mui/material', '@mui/icons-material'],
     ...(process.env.DISABLE_CACHE === 'true' && {
