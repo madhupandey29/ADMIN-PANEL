@@ -6,10 +6,7 @@ import CardContent from '@mui/material/CardContent';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import Avatar from '@mui/material/Avatar';
-import Grid from '@mui/material/Grid';
 import Chip from '@mui/material/Chip';
-import Tabs from '@mui/material/Tabs';
-import Tab from '@mui/material/Tab';
 import LinearProgress from '@mui/material/LinearProgress';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -287,11 +284,7 @@ export default function DashboardPage() {
   const [productCount, setProductCount] = useState<number>(0);
   const [seoCount, setSeoCount] = useState<number>(0);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-  const [activeTab, setActiveTab] = useState(0);
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setActiveTab(newValue);
-  };
 
   useEffect(() => {
     const checkAuth = () => {
@@ -690,205 +683,138 @@ export default function DashboardPage() {
     },
   ];
 
-  // Group cards into categories
-  const cardCategories = [
-    {
-      id: 'overview',
-      label: 'Overview',
-      icon: <DashboardIcon />,
-      cards: cardData.filter(card => 
-        ['Users', 'Products', 'Categories', 'Vendors', 'SEO', 'Contacts', 'About Us', 'Office Info'].includes(card.title)
-      )
-    },
-    {
-      id: 'products',
-      label: 'Products',
-      icon: <InventoryIcon />,
-      cards: cardData.filter(card => 
-        ['Products', 'Categories', 'Vendors', 'Designs', 'Colors', 'Finishes', 'Sub Finishes', 'Structures', 'Sub Structures', 'Suitable For', 'Sub Suitables', 'Group Codes'].includes(card.title)
-      )
-    },
-    {
-      id: 'locations',
-      label: 'Locations',
-      icon: <LocationOnIcon />,
-      cards: cardData.filter(card => 
-        ['Countries', 'States', 'Cities', 'Locations'].includes(card.title)
-      )
-    },
-    {
-      id: 'content',
-      label: 'Content',
-      icon: <DescriptionIcon />,
-      cards: cardData.filter(card => 
-        ['SEO', 'Contents', 'About Us', 'Office Info', 'Contacts', 'Blogs'].includes(card.title)
-      )
-    },
-    {
-      id: 'users',
-      label: 'Users',
-      icon: <PeopleIcon />,
-      cards: cardData.filter(card => 
-        ['Users'].includes(card.title)
-      )
-    }
-  ];
+
 
 
   return (
     <Box sx={{ p: 0 }}>
       {/* Header Section */}
-      <Box sx={{ mb: 2.5 }}>
-        <Typography variant="h5" sx={{
-          fontWeight: 600,
-          color: 'text.primary',
-          mb: 0.5
-        }}>
-          AGE Dashboard
-        </Typography>
-        <Typography variant="body2" sx={{
-          color: 'text.secondary',
-          fontSize: '14px',
-          mb: 2
-        }}>
-          Overview of your product, SEO, and filter data.
-        </Typography>
-        
-        {/* Tabs */}
-        <Tabs
-          value={activeTab}
-          onChange={handleTabChange}
-          variant="scrollable"
-          scrollButtons="auto"
-          sx={{
-            mb: 3,
-            '& .MuiTabs-indicator': {
-              height: 3,
-              borderRadius: '3px 3px 0 0',
-            },
-          }}
-        >
-          {cardCategories.map((category) => (
-            <Tab 
-              key={category.id}
-              label={category.label}
-              icon={category.icon}
-              iconPosition="start"
-              sx={{
-                minHeight: 48,
-                textTransform: 'none',
-                fontWeight: 600,
-                '&.Mui-selected': {
-                  color: 'primary.main',
-                },
-              }}
-            />
-          ))}
-        </Tabs>
+      <Box sx={{ 
+        mb: 4,
+        background: 'linear-gradient(135deg, #7367f0 0%, #9c8cfc 100%)',
+        borderRadius: '16px',
+        p: 4,
+        boxShadow: '0 8px 24px rgba(115,103,240,0.25)',
+      }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Box>
+            <Typography variant="h3" sx={{
+              fontWeight: 700,
+              color: 'white',
+              mb: 1,
+              letterSpacing: '0.5px'
+            }}>
+              Welcome to AGE Dashboard
+            </Typography>
+            <Typography variant="h6" sx={{
+              color: 'rgba(255,255,255,0.9)',
+              fontSize: '16px',
+              fontWeight: 400
+            }}>
+              Complete overview of your products, SEO, and management data
+            </Typography>
+          </Box>
+          <Avatar sx={{ 
+            width: 64, 
+            height: 64, 
+            bgcolor: 'white',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.2)'
+          }}>
+            <DashboardIcon sx={{ fontSize: 36, color: '#7367f0' }} />
+          </Avatar>
+        </Box>
       </Box>
 
-      {/* Tab Content */}
-      <Box sx={{ mt: 2 }}>
-        {cardCategories.map((category, index) => (
-          <Box 
-            key={category.id}
-            role="tabpanel"
-            hidden={activeTab !== index}
-            id={`dashboard-tabpanel-${index}`}
-            aria-labelledby={`dashboard-tab-${index}`}
-          >
-            {activeTab === index && (
-              <Grid container spacing={2}>
-                {category.cards.map((card, idx) => (
-                  <div 
-                    key={card.title + idx}
-                    style={{
-                      width: '100%',
-                      padding: '8px',
-                      boxSizing: 'border-box'
-                    }}
-                    className="grid-item"
-                  >
-                    <Card
-                      sx={{
-                        height: '100%',
-                        background: 'background.paper',
-                        borderRadius: '8px',
-                        boxShadow: '0 2px 12px 0 rgba(0,0,0,0.05)',
-                        border: '1px solid',
-                        borderColor: 'divider',
-                        transition: 'all 0.3s ease',
-                        cursor: 'pointer',
-                        '&:hover': {
-                          boxShadow: '0 4px 20px 0 rgba(0,0,0,0.1)',
-                          transform: 'translateY(-2px)',
-                          borderColor: 'primary.main',
-                        },
-                      }}
-                      onClick={() => router.push(card.href)}
-                    >
-                      <CardContent sx={{ p: 2.5 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                          <Box sx={{
-                            width: 40,
-                            height: 40,
-                            borderRadius: '8px',
-                            bgcolor: `${card.color}15`,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            mr: 1.5,
-                            color: card.color
-                          }}>
-                            {React.cloneElement(card.icon, { fontSize: 'small' })}
-                          </Box>
-                          <Box sx={{ flex: 1 }}>
-                            <Typography variant="h5" sx={{
-                              fontWeight: 700,
-                              color: 'text.primary',
-                              lineHeight: 1.2,
-                              fontSize: '1.5rem'
-                            }}>
-                              {card.value}
-                            </Typography>
-                            <Typography variant="body2" sx={{
-                              color: 'text.secondary',
-                              fontWeight: 500,
-                              fontSize: '0.8125rem',
-                              mt: 0.25
-                            }}>
-                              {card.subtitle}
-                            </Typography>
-                          </Box>
-                        </Box>
-                        <Box sx={{
-                          mt: 1.5,
-                          pt: 1.5,
-                          borderTop: '1px solid',
-                          borderColor: 'divider',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between'
-                        }}>
-                          <Typography variant="caption" sx={{
-                            color: 'primary.main',
-                            fontWeight: 600,
-                            display: 'flex',
-                            alignItems: 'center',
-                            '&:hover': {
-                              textDecoration: 'underline'
-                            }
-                          }}>
-                            View Details
-                            <ArrowForwardIcon sx={{ fontSize: '1rem', ml: 0.5 }} />
-                          </Typography>
-                        </Box>
-                      </CardContent>
-                    </Card>
-                  </div>
-                ))}
-              </Grid>
-            )}
+      {/* All Cards in Grid */}
+      <Box sx={{ 
+        display: 'grid',
+        gridTemplateColumns: {
+          xs: '1fr',
+          sm: 'repeat(2, 1fr)',
+          md: 'repeat(3, 1fr)',
+          lg: 'repeat(4, 1fr)'
+        },
+        gap: 3
+      }}>
+        {cardData.map((card, idx) => (
+          <Box key={card.title + idx}>
+            <Card
+              sx={{
+                height: '100%',
+                background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+                borderRadius: '12px',
+                boxShadow: '0 2px 12px 0 rgba(0,0,0,0.08)',
+                border: '1px solid',
+                borderColor: 'divider',
+                transition: 'all 0.3s ease',
+                cursor: 'pointer',
+                '&:hover': {
+                  boxShadow: `0 8px 24px 0 ${card.color}40`,
+                  transform: 'translateY(-4px)',
+                  borderColor: card.color,
+                },
+              }}
+              onClick={() => router.push(card.href)}
+            >
+              <CardContent sx={{ p: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <Box sx={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: '12px',
+                    background: `linear-gradient(135deg, ${card.color} 0%, ${card.color}dd 100%)`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    mr: 2,
+                    color: 'white',
+                    boxShadow: `0 4px 12px ${card.color}40`
+                  }}>
+                    {React.cloneElement(card.icon, { fontSize: 'medium' })}
+                  </Box>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="h4" sx={{
+                      fontWeight: 700,
+                      color: card.color,
+                      lineHeight: 1.2,
+                      fontSize: '2rem'
+                    }}>
+                      {card.value}
+                    </Typography>
+                  </Box>
+                </Box>
+                <Typography variant="body2" sx={{
+                  color: 'text.secondary',
+                  fontWeight: 500,
+                  fontSize: '0.875rem',
+                  mb: 2
+                }}>
+                  {card.subtitle}
+                </Typography>
+                <Box sx={{
+                  pt: 2,
+                  borderTop: '1px solid',
+                  borderColor: 'divider',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between'
+                }}>
+                  <Typography variant="caption" sx={{
+                    color: card.color,
+                    fontWeight: 600,
+                    display: 'flex',
+                    alignItems: 'center',
+                    fontSize: '0.75rem',
+                    '&:hover': {
+                      textDecoration: 'underline'
+                    }
+                  }}>
+                    View Details
+                    <ArrowForwardIcon sx={{ fontSize: '0.875rem', ml: 0.5 }} />
+                  </Typography>
+                </Box>
+              </CardContent>
+            </Card>
           </Box>
         ))}
       </Box>

@@ -403,6 +403,12 @@ function EnhancedDataTable<T extends Record<string, any>>({
     return Object.keys(columnFilters).length + (search ? 1 : 0);
   }, [columnFilters, search]);
 
+  const getImageUrl = (img: string | undefined): string | undefined => {
+    if (!img) return undefined;
+    if (img.startsWith('http://') || img.startsWith('https://')) return img;
+    return `${process.env.NEXT_PUBLIC_API_URL}/images/${img}`;
+  };
+
   const renderCellContent = useCallback((column: Column<T>, row: T) => {
     const value = row[column.id];
     
@@ -413,10 +419,12 @@ function EnhancedDataTable<T extends Record<string, any>>({
     switch (column.type) {
       case 'image':
         if (!value) return '-';
+        const imageUrl = getImageUrl(value as string);
+        if (!imageUrl) return '-';
         return (
-          <Box sx={{ width: 40, height: 40, position: 'relative', borderRadius: 1, overflow: 'hidden' }}>
+          <Box sx={{ width: 40, height: 40, position: 'relative', borderRadius: 1, overflow: 'hidden', border: '1px solid #e0e0e0' }}>
             <Image
-              src={value}
+              src={imageUrl}
               alt="preview"
               fill
               style={{ objectFit: 'cover' }}
@@ -468,73 +476,98 @@ function EnhancedDataTable<T extends Record<string, any>>({
 
   return (
     <Box sx={{ width: '100%' }}>
-      {/* Toolbar */}
-      <Box sx={{ mb: 2, display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
-        {/* Search Bar */}
-        {searchable && (
-          <TextField
-            placeholder={searchPlaceholder}
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
-            size="small"
-            sx={{
-              flex: 1,
-              minWidth: 250,
-              maxWidth: 400,
-              '& .MuiOutlinedInput-root': {
-                borderRadius: '8px',
-              },
-            }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon sx={{ color: 'text.secondary' }} />
-                </InputAdornment>
-              ),
-            }}
-          />
-        )}
-        
-        {/* Active Filters Badge */}
-        {activeFiltersCount > 0 && (
-          <Chip
-            label={`${activeFiltersCount} filter${activeFiltersCount > 1 ? 's' : ''} active`}
-            size="small"
-            onDelete={handleClearAllFilters}
-            color="primary"
-            sx={{ fontWeight: 500 }}
-          />
-        )}
-        
-        {/* Selected Count */}
-        {selected.size > 0 && (
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            {selected.size} selected
-          </Typography>
-        )}
-        
-        <Box sx={{ flex: 1 }} />
-        
-        {/* Column Management Button */}
-        {enableColumnManagement && (
-          <Tooltip title="Manage Columns">
-            <IconButton
-              size="small"
-              onClick={() => setColumnManagementOpen(true)}
-              sx={{
-                border: '1px solid',
-                borderColor: 'divider',
-                borderRadius: '8px',
+      {/* Compact Toolbar - Search and Manage Columns */}
+      {(searchable || enableColumnManagement || activeFiltersCount > 0 || selected.size > 0) && (
+        <Box sx={{ mb: 0.5, display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'nowrap' }}>
+          {/* Search Bar */}
+          {searchable && (
+            <TextField
+              placeholder={searchPlaceholder}
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
               }}
-            >
-              <ViewColumnIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        )}
-      </Box>
+              size="small"
+              sx={{
+                flex: 1,
+                minWidth: 200,
+                maxWidth: 300,
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: '6px',
+                  fontSize: '13px',
+                  height: 32,
+                  '& fieldset': {
+                    borderColor: 'rgba(0, 0, 0, 0.23)',
+                    borderWidth: '1.5px'
+                  },
+                  '&:hover fieldset': {
+                    borderColor: 'rgba(0, 0, 0, 0.4)',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: 'primary.main',
+                    borderWidth: '2px'
+                  }
+                },
+                '& .MuiOutlinedInput-input': {
+                  py: 0.5,
+                  fontSize: '13px'
+                }
+              }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon sx={{ color: 'text.secondary', fontSize: 16 }} />
+                  </InputAdornment>
+                ),
+              }}
+            />
+          )}
+          
+          {/* Active Filters */}
+          {activeFiltersCount > 0 && (
+            <Chip
+              label={`${activeFiltersCount} filter${activeFiltersCount > 1 ? 's' : ''}`}
+              size="small"
+              onDelete={handleClearAllFilters}
+              color="primary"
+              sx={{ fontWeight: 500, height: 24, fontSize: '11px' }}
+            />
+          )}
+          
+          {/* Selected Count */}
+          {selected.size > 0 && (
+            <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '12px', whiteSpace: 'nowrap' }}>
+              {selected.size} selected
+            </Typography>
+          )}
+          
+          <Box sx={{ flex: 1 }} />
+          
+          {/* Manage Columns */}
+          {enableColumnManagement && (
+            <Tooltip title="Manage Columns">
+              <IconButton
+                size="small"
+                onClick={() => setColumnManagementOpen(true)}
+                sx={{
+                  border: '1.5px solid',
+                  borderColor: 'rgba(0, 0, 0, 0.23)',
+                  borderRadius: '6px',
+                  width: 32,
+                  height: 32,
+                  '&:hover': {
+                    borderColor: 'rgba(0, 0, 0, 0.4)',
+                    bgcolor: 'action.hover'
+                  }
+                }}
+              >
+                <ViewColumnIcon sx={{ fontSize: 16 }} />
+              </IconButton>
+            </Tooltip>
+          )}
+        </Box>
+      )}
 
       {/* Table */}
       <Paper
@@ -552,12 +585,13 @@ function EnhancedDataTable<T extends Record<string, any>>({
             <TableHead>
               <TableRow>
                 {selectable && (
-                  <TableCell padding="checkbox">
+                  <TableCell padding="checkbox" sx={{ py: 1 }}>
                     <Checkbox
                       indeterminate={isSomeSelected}
                       checked={isAllSelected}
                       onChange={handleSelectAll}
                       sx={{ color: 'primary.main' }}
+                      size="small"
                     />
                   </TableCell>
                 )}
@@ -567,7 +601,10 @@ function EnhancedDataTable<T extends Record<string, any>>({
                     align={column.align || 'left'}
                     style={{ minWidth: column.minWidth }}
                     sx={{
+                      py: 1,
+                      px: 1.5,
                       fontWeight: 700,
+                      fontSize: '13px',
                       color: 'text.primary',
                       bgcolor: 'background.paper',
                       borderBottom: '2px solid',
@@ -580,11 +617,16 @@ function EnhancedDataTable<T extends Record<string, any>>({
                           active={orderBy === column.id}
                           direction={orderBy === column.id ? order : 'asc'}
                           onClick={() => handleSort(column.id)}
+                          sx={{ '& .MuiTableSortLabel-icon': { fontSize: '16px' } }}
                         >
-                          {column.label}
+                          <Typography variant="inherit" sx={{ fontSize: '13px', fontWeight: 700 }}>
+                            {column.label}
+                          </Typography>
                         </TableSortLabel>
                       ) : (
-                        <Typography variant="inherit">{column.label}</Typography>
+                        <Typography variant="inherit" sx={{ fontSize: '13px', fontWeight: 700 }}>
+                          {column.label}
+                        </Typography>
                       )}
                       
                       {/* Filter Icon */}
@@ -598,7 +640,7 @@ function EnhancedDataTable<T extends Record<string, any>>({
                               color: columnFilters[column.id] ? 'primary.main' : 'text.secondary',
                             }}
                           >
-                            <FilterListIcon fontSize="small" />
+                            <FilterListIcon sx={{ fontSize: '16px' }} />
                           </IconButton>
                         </Tooltip>
                       )}
@@ -609,12 +651,15 @@ function EnhancedDataTable<T extends Record<string, any>>({
                   <TableCell
                     align="center"
                     sx={{
+                      py: 1,
+                      px: 1,
                       fontWeight: 700,
+                      fontSize: '13px',
                       color: 'text.primary',
                       bgcolor: 'background.paper',
                       borderBottom: '2px solid',
                       borderColor: 'divider',
-                      minWidth: 120,
+                      minWidth: 100,
                     }}
                   >
                     Actions
@@ -680,22 +725,31 @@ function EnhancedDataTable<T extends Record<string, any>>({
                       className={rowClassName?.(row)}
                     >
                       {selectable && (
-                        <TableCell padding="checkbox">
+                        <TableCell padding="checkbox" sx={{ py: 0.75 }}>
                           <Checkbox
                             checked={isSelected}
                             onChange={() => handleSelect(row)}
                             onClick={(e) => e.stopPropagation()}
                             sx={{ color: 'primary.main' }}
+                            size="small"
                           />
                         </TableCell>
                       )}
                       {visibleColumnsArray.map((column) => (
-                        <TableCell key={column.id} align={column.align || 'left'}>
+                        <TableCell 
+                          key={column.id} 
+                          align={column.align || 'left'}
+                          sx={{ 
+                            py: 0.75, 
+                            px: 1.5,
+                            fontSize: '13px'
+                          }}
+                        >
                           {renderCellContent(column, row)}
                         </TableCell>
                       ))}
                       {hasActions && (
-                        <TableCell align="center">
+                        <TableCell align="center" sx={{ py: 0.75, px: 1 }}>
                           <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
                             {onView && (
                               <Tooltip title="View">

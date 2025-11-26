@@ -274,8 +274,7 @@ export default function ProductPage() {
       id: 'img',
       label: 'Image',
       type: 'image',
-      minWidth: 80,
-      format: (value, product: Product) => product.img ? getImageUrl(product.img) : undefined,
+      minWidth: 60,
     },
     {
       id: 'name',
@@ -1235,54 +1234,66 @@ export default function ProductPage() {
         </Box>
       )}
 
-      {/* Header Section */}
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" gutterBottom sx={{ fontWeight: 600 }}>
-          🛍️ Product Management
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          Manage your product catalog with advanced filtering and sorting
-        </Typography>
-      </Box>
-
-      {/* Statistics Dashboard */}
-      <Box sx={{
-        mb: 3,
-        p: 2,
-        bgcolor: 'background.paper',
-        borderRadius: 2,
-        border: '1px solid',
-        borderColor: 'divider',
-        display: 'flex',
-        gap: 2,
-        flexWrap: 'wrap',
+      {/* Compact Header - Everything in ONE row */}
+      <Box sx={{ 
+        mb: 0.5, 
+        mt: 0,
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: 1,
+        flexWrap: 'nowrap',
+        minHeight: 40
       }}>
-        <Chip label={`Total Products: ${stats.total}`} color="primary" />
-        <Chip label={`Popular: ${stats.popular}`} color="success" />
-        <Chip label={`Top Rated: ${stats.topRated}`} color="info" />
-        <Chip label={`Landing Page: ${stats.landingPage}`} color="warning" />
-        <Chip label={`With Price: ${stats.withPrice}`} color="secondary" />
-      </Box>
+        {/* Left: Icon + Title */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0, flex: '0 0 auto' }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 600, whiteSpace: 'nowrap', fontSize: '15px' }}>
+            🛍️ Product Management
+          </Typography>
+        </Box>
 
-      {/* Bulk Actions */}
-      <Box sx={{ mb: 2, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-        <Button
-          variant="contained"
-          startIcon={<DownloadIcon />}
-          onClick={handleExportSelected}
-          disabled={selectedProducts.length === 0 || pageAccess === 'only view'}
-        >
-          Export Selected ({selectedProducts.length})
-        </Button>
-        <Button
-          variant="contained"
-          color="success"
-          startIcon={<AddIcon />}
-          onClick={handleAdd}
-          disabled={pageAccess === 'only view'}
-        >
-          Add New Product
-        </Button>
+        {/* Middle: Search Bar - Will be shown by EnhancedDataTable */}
+        <Box sx={{ flex: '1 1 auto' }} />
+
+        {/* Right: Export, Add */}
+        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flex: '0 0 auto' }}>
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<DownloadIcon sx={{ fontSize: 16 }} />}
+            onClick={handleExportSelected}
+            disabled={selectedProducts.length === 0 || pageAccess === 'only view'}
+            sx={{ 
+              whiteSpace: 'nowrap',
+              py: 0.5,
+              px: 1.5,
+              fontSize: '13px',
+              minHeight: 32,
+              borderWidth: '1.5px',
+              '&:hover': {
+                borderWidth: '1.5px'
+              }
+            }}
+          >
+            Export ({selectedProducts.length})
+          </Button>
+          <Button
+            variant="contained"
+            size="small"
+            color="success"
+            startIcon={<AddIcon sx={{ fontSize: 16 }} />}
+            onClick={handleAdd}
+            disabled={pageAccess === 'only view'}
+            sx={{ 
+              whiteSpace: 'nowrap',
+              py: 0.5,
+              px: 1.5,
+              fontSize: '13px',
+              minHeight: 32
+            }}
+          >
+            Add New Product
+          </Button>
+        </Box>
       </Box>
 
       {/* Data Table */}
@@ -1301,6 +1312,7 @@ export default function ProductPage() {
           onView={handleView}
           enableColumnFilters
           enableColumnManagement
+          searchable
           rowsPerPage={15}
           searchPlaceholder="Search by name, slug, SKU, category..."
           storageKey="products-table"

@@ -415,51 +415,38 @@ function SeoPage() {
       )}
 
       {/* Header */}
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" gutterBottom sx={{ fontWeight: 600 }}>
-          🔍 SEO Management
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          Manage SEO settings for your products and locations with advanced filtering
-        </Typography>
-      </Box>
+      <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
+        <Box>
+          <Typography variant="h5" sx={{ fontWeight: 600, mb: 0.5 }}>
+            🔍 SEO Management
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Manage SEO settings for your products and locations with advanced filtering
+          </Typography>
+        </Box>
 
-      {/* Statistics Dashboard */}
-      <Box sx={{
-        mb: 3,
-        p: 2,
-        bgcolor: 'background.paper',
-        borderRadius: 2,
-        border: '1px solid',
-        borderColor: 'divider',
-        display: 'flex',
-        gap: 2,
-        flexWrap: 'wrap',
-      }}>
-        <Chip label={`Total SEO Entries: ${stats.total}`} color="primary" />
-        <Chip label={`With Excerpt: ${stats.withExcerpt}`} color="success" />
-        <Chip label={`With Keywords: ${stats.withKeywords}`} color="info" />
-      </Box>
-
-      {/* Bulk Actions */}
-      <Box sx={{ mb: 2, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-        <Button
-          variant="contained"
-          startIcon={<DownloadIcon />}
-          onClick={handleExportSelected}
-          disabled={selectedSeos.length === 0 || pageAccess === 'only view'}
-        >
-          Export Selected ({selectedSeos.length})
-        </Button>
-        <Button
-          variant="contained"
-          color="success"
-          startIcon={<AddIcon />}
-          onClick={handleAdd}
-          disabled={pageAccess === 'only view'}
-        >
-          Add New SEO Entry
-        </Button>
+        {/* Bulk Actions */}
+        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<DownloadIcon />}
+            onClick={handleExportSelected}
+            disabled={selectedSeos.length === 0 || pageAccess === 'only view'}
+          >
+            Export ({selectedSeos.length})
+          </Button>
+          <Button
+            variant="contained"
+            size="small"
+            color="success"
+            startIcon={<AddIcon />}
+            onClick={handleAdd}
+            disabled={pageAccess === 'only view'}
+          >
+            Add New SEO Entry
+          </Button>
+        </Box>
       </Box>
 
       {/* Data Table */}

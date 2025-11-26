@@ -1,5 +1,6 @@
 "use client";
-import { GenericFilterPage } from '@/components';
+import React from 'react';
+import GenericFilterPage from '@/components/GenericFilterPage';
 import { categoryConfig } from '@/config/filterConfigs';
 
 export default function CategoryPage() {

@@ -580,53 +580,38 @@ export default function OrdersPage() {
       )}
 
       {/* Header Section */}
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" gutterBottom sx={{ fontWeight: 600 }}>
-          📦 Order Management
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          Manage your orders with advanced filtering and sorting
-        </Typography>
-      </Box>
+      <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
+        <Box>
+          <Typography variant="h5" sx={{ fontWeight: 600, mb: 0.5 }}>
+            📦 Order Management
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Manage your orders with advanced filtering and sorting
+          </Typography>
+        </Box>
 
-      {/* Statistics Dashboard */}
-      <Box sx={{
-        mb: 3,
-        p: 2,
-        bgcolor: 'background.paper',
-        borderRadius: 2,
-        border: '1px solid',
-        borderColor: 'divider',
-        display: 'flex',
-        gap: 2,
-        flexWrap: 'wrap',
-      }}>
-        <Chip label={`Total: ${stats.total}`} color="primary" />
-        <Chip label={`Pending: ${stats.pending}`} color="warning" />
-        <Chip label={`Paid: ${stats.paid}`} color="success" />
-        <Chip label={`Failed: ${stats.failed}`} color="error" />
-        <Chip label={`Refunded: ${stats.refunded}`} color="default" />
-      </Box>
-
-      {/* Bulk Actions */}
-      <Box sx={{ mb: 2, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-        <Button
-          variant="contained"
-          startIcon={<DownloadIcon />}
-          onClick={handleExportSelected}
-          disabled={selectedOrders.length === 0 || pageAccess === 'only view'}
-        >
-          Export Selected ({selectedOrders.length})
-        </Button>
-        <Button
-          variant="contained"
-          color="success"
-          startIcon={<AddIcon />}
-          onClick={handleAdd}
-          disabled={pageAccess === 'only view'}
-        >
-          Add New Order
-        </Button>
+        {/* Bulk Actions */}
+        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<DownloadIcon />}
+            onClick={handleExportSelected}
+            disabled={selectedOrders.length === 0 || pageAccess === 'only view'}
+          >
+            Export ({selectedOrders.length})
+          </Button>
+          <Button
+            variant="contained"
+            size="small"
+            color="success"
+            startIcon={<AddIcon />}
+            onClick={handleAdd}
+            disabled={pageAccess === 'only view'}
+          >
+            Add New Order
+          </Button>
+        </Box>
       </Box>
 
       {/* Data Table */}
