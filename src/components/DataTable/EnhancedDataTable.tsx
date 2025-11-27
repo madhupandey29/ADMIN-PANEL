@@ -245,7 +245,8 @@ function EnhancedDataTable<T extends Record<string, any>>({
 
   // Filter data based on search
   const filteredData = useMemo(() => {
-    let result = data;
+    // Ensure data is always an array
+    let result = Array.isArray(data) ? data : [];
     
     // Apply search filter
     if (search) {

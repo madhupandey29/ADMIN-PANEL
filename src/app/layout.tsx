@@ -431,37 +431,6 @@ const Sidebar = React.memo(() => {
           {/* Product * Location */}
           <ListItemButton
             component={NextLink}
-            href="/product-location"
-            sx={getMenuItemSx('/product-location')}
-          >
-            <ListItemIcon sx={{
-              color: pathname === '/product-location' ? '#7367f0' : '#6b7280',
-              minWidth: 0,
-              mr: isCollapsed ? 0 : 1.5,
-              justifyContent: 'center',
-              display: 'flex',
-            }}>
-              <PublicIcon fontSize="small" />
-            </ListItemIcon>
-            {!isCollapsed && (
-              <ListItemText
-                primary="Product * Location"
-                sx={{
-                  '& .MuiTypography-root': {
-                    fontSize: '14px',
-                    fontWeight: pathname === '/product-location' ? 600 : 500,
-                    color: pathname === '/product-location' ? '#7367f0' : '#374151',
-                  }
-                }}
-              />
-            )}
-          </ListItemButton>
-
-
-
-          {/* SEO */}
-          <ListItemButton
-            component={NextLink}
             href="/seo"
             sx={{
               borderRadius: '10px',

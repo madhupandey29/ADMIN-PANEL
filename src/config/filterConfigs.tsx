@@ -437,8 +437,31 @@ export const aboutUsConfig: FilterConfig = {
   columns: [
     { id: 'descriptionsmall', label: 'Small Description', sortable: true, filterable: true, format: (value) => value ? value.substring(0, 50) + '...' : '-' },
     { id: 'descriptionmedium', label: 'Medium Description', sortable: true, filterable: true, format: (value) => value ? value.substring(0, 50) + '...' : '-' },
+    { id: 'descriptionlarger', label: 'Large Description', sortable: true, filterable: true, format: (value) => value ? value.substring(0, 50) + '...' : '-' },
   ],
   features: { hasImage: false, hasAdd: true, hasEdit: true, hasDelete: true, hasExport: true, hasSearch: true },
+  transformData: (items) => {
+    // Handle the specific API response format: { data: { aboutUs: [...] } }
+    if (items?.aboutUs && Array.isArray(items.aboutUs)) {
+      return items.aboutUs;
+    }
+    // Handle if it's already an array
+    if (Array.isArray(items)) {
+      return items;
+    }
+    // Handle other nested formats
+    if (items?.data?.aboutUs && Array.isArray(items.data.aboutUs)) {
+      return items.data.aboutUs;
+    }
+    if (items?.data && Array.isArray(items.data)) {
+      return items.data;
+    }
+    // If it's a single object, wrap it in an array
+    if (items && typeof items === 'object') {
+      return [items];
+    }
+    return [];
+  },
 };
 
 // 21. Blog - title, author, heading, paragraph1-3, blogimage1-2, altimage1-2
