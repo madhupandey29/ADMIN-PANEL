@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Dialog, AppBar, Toolbar, IconButton, Typography, Button, DialogContent,
   Box, Chip, TextField, FormControl, InputLabel, Select, MenuItem,
-  Checkbox, FormControlLabel
+  Checkbox, FormControlLabel, Autocomplete
 } from '@mui/material';
 import ClearIcon from '@mui/icons-material/Clear';
 import EditIcon from '@mui/icons-material/Edit';
@@ -52,17 +52,17 @@ export default function ProductViewDialog({
         um: getId(product.um),
         currency: getId(product.currency),
         // Ensure arrays are properly formatted
-        color: Array.isArray(product.color) 
+        color: Array.isArray(product.color)
           ? product.color.map((c: any) => getId(c))
           : [getId(product.color)],
-        subsuitable: Array.isArray(product.subsuitable) 
-          ? product.subsuitable 
+        subsuitable: Array.isArray(product.subsuitable)
+          ? product.subsuitable
           : [],
-        leadtime: Array.isArray(product.leadtime) 
-          ? product.leadtime 
+        leadtime: Array.isArray(product.leadtime)
+          ? product.leadtime
           : [],
       };
-      
+
       setEditData(processedData);
     }
   }, [product]);
@@ -94,9 +94,9 @@ export default function ProductViewDialog({
             <ClearIcon />
           </IconButton>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, ml: 2, flex: 1 }}>
-            {product.img && (
+            {product.image3 && (
               <Box sx={{ width: 50, height: 50, position: 'relative', borderRadius: 1, overflow: 'hidden', border: '2px solid white' }}>
-                <Image src={getImageUrl(product.img) || ''} alt={product.name} fill style={{ objectFit: 'cover' }} />
+                <Image src={getImageUrl(product.image3) || ''} alt={product.name} fill style={{ objectFit: 'cover' }} />
               </Box>
             )}
             <Box>
@@ -112,8 +112,8 @@ export default function ProductViewDialog({
               startIcon={<EditIcon />}
               onClick={() => setIsEditMode(true)}
               disabled={pageAccess === 'only view'}
-              sx={{ 
-                bgcolor: 'white', 
+              sx={{
+                bgcolor: 'white',
                 color: '#2c3e50',
                 fontWeight: 600,
                 '&:hover': { bgcolor: '#f0f0f0' }
@@ -123,25 +123,25 @@ export default function ProductViewDialog({
             </Button>
           ) : (
             <Box sx={{ display: 'flex', gap: 1 }}>
-              <Button 
-                variant="outlined" 
-                startIcon={<CancelIcon />} 
-                onClick={handleCancel} 
-                sx={{ 
-                  borderColor: 'white', 
+              <Button
+                variant="outlined"
+                startIcon={<CancelIcon />}
+                onClick={handleCancel}
+                sx={{
+                  borderColor: 'white',
                   color: 'white',
                   '&:hover': { borderColor: 'white', bgcolor: 'rgba(255,255,255,0.1)' }
                 }}
               >
                 Cancel
               </Button>
-              <Button 
-                variant="contained" 
-                startIcon={<SaveIcon />} 
-                onClick={handleSave} 
+              <Button
+                variant="contained"
+                startIcon={<SaveIcon />}
+                onClick={handleSave}
                 disabled={saving}
-                sx={{ 
-                  bgcolor: '#4caf50', 
+                sx={{
+                  bgcolor: '#4caf50',
                   color: 'white',
                   fontWeight: 600,
                   '&:hover': { bgcolor: '#45a049' }
@@ -161,10 +161,10 @@ export default function ProductViewDialog({
             🖼️ Product Images
           </Typography>
           <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 2 }}>
-            {product.img && (
+            {product.image3 && (
               <Box>
                 <Typography variant="caption" fontWeight={600} display="block" mb={1}>Main Image</Typography>
-                <Image src={getImageUrl(product.img) || ''} alt="Main" width={200} height={200} style={{ width: '100%', height: 'auto', borderRadius: 8 }} />
+                <Image src={getImageUrl(product.image3) || ''} alt="Main" width={200} height={200} style={{ width: '100%', height: 'auto', borderRadius: 8 }} />
               </Box>
             )}
             {product.image1 && (
@@ -186,6 +186,57 @@ export default function ProductViewDialog({
               </Box>
             )}
           </Box>
+
+          {/* Alternative Media Details */}
+          {(product.altimg1 || product.altimg2 || product.altimg3 || product.altvideo || product.videourl || product.videoalt) && (
+            <Box sx={{ mt: 3 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: '#2c3e50' }}>
+                Alternative Media Details
+              </Typography>
+              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 2 }}>
+                {product.altimg1 && (
+                  <Box>
+                    <Typography variant="caption" color="text.secondary" fontWeight={600}>Alternative Image 1 Text</Typography>
+                    <Typography variant="body2">{product.altimg1}</Typography>
+                  </Box>
+                )}
+                {product.altimg2 && (
+                  <Box>
+                    <Typography variant="caption" color="text.secondary" fontWeight={600}>Alternative Image 2 Text</Typography>
+                    <Typography variant="body2">{product.altimg2}</Typography>
+                  </Box>
+                )}
+                {product.altimg3 && (
+                  <Box>
+                    <Typography variant="caption" color="text.secondary" fontWeight={600}>Alternative Image 3 Text</Typography>
+                    <Typography variant="body2">{product.altimg3}</Typography>
+                  </Box>
+                )}
+                {product.altvideo && (
+                  <Box>
+                    <Typography variant="caption" color="text.secondary" fontWeight={600}>Video Alt Text</Typography>
+                    <Typography variant="body2">{product.altvideo}</Typography>
+                  </Box>
+                )}
+              </Box>
+              {(product.videourl || product.videoalt) && (
+                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2, mt: 2 }}>
+                  {product.videourl && (
+                    <Box>
+                      <Typography variant="caption" color="text.secondary" fontWeight={600}>YT Video URL</Typography>
+                      <Typography variant="body2" sx={{ wordBreak: 'break-all' }}>{product.videourl}</Typography>
+                    </Box>
+                  )}
+                  {product.videoalt && (
+                    <Box>
+                      <Typography variant="caption" color="text.secondary" fontWeight={600}>YT Video Alt Text</Typography>
+                      <Typography variant="body2">{product.videoalt}</Typography>
+                    </Box>
+                  )}
+                </Box>
+              )}
+            </Box>
+          )}
         </Box>
 
         {/* Basic Information - 6 columns */}
@@ -196,35 +247,35 @@ export default function ProductViewDialog({
           <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 2 }}>
             <Box sx={{ gridColumn: 'span 3' }}>
               {isEditMode ? (
-                <TextField label="Product Name" value={editData.name || ''} onChange={(e) => setEditData({...editData, name: e.target.value})} fullWidth size="small" />
+                <TextField label="Product Name" value={editData.name || ''} onChange={(e) => setEditData({ ...editData, name: e.target.value })} fullWidth size="small" />
               ) : (
                 <Box><Typography variant="caption" color="text.secondary" fontWeight={600}>Product Name</Typography><Typography variant="body2">{currentData.name}</Typography></Box>
               )}
             </Box>
             <Box sx={{ gridColumn: 'span 3' }}>
               {isEditMode ? (
-                <TextField label="Slug" value={editData.slug || ''} onChange={(e) => setEditData({...editData, slug: e.target.value})} fullWidth size="small" />
+                <TextField label="Slug" value={editData.slug || ''} onChange={(e) => setEditData({ ...editData, slug: e.target.value })} fullWidth size="small" />
               ) : (
                 <Box><Typography variant="caption" color="text.secondary" fontWeight={600}>Slug</Typography><Typography variant="body2">{currentData.slug || '-'}</Typography></Box>
               )}
             </Box>
             <Box sx={{ gridColumn: 'span 2' }}>
               {isEditMode ? (
-                <TextField label="SKU" value={editData.sku || ''} onChange={(e) => setEditData({...editData, sku: e.target.value})} fullWidth size="small" />
+                <TextField label="SKU" value={editData.sku || ''} onChange={(e) => setEditData({ ...editData, sku: e.target.value })} fullWidth size="small" />
               ) : (
                 <Box><Typography variant="caption" color="text.secondary" fontWeight={600}>SKU</Typography><Typography variant="body2">{currentData.sku || '-'}</Typography></Box>
               )}
             </Box>
             <Box sx={{ gridColumn: 'span 2' }}>
               {isEditMode ? (
-                <TextField label="Product ID" value={editData.productIdentifier || ''} onChange={(e) => setEditData({...editData, productIdentifier: e.target.value})} fullWidth size="small" />
+                <TextField label="Product ID" value={editData.productIdentifier || ''} onChange={(e) => setEditData({ ...editData, productIdentifier: e.target.value })} fullWidth size="small" />
               ) : (
                 <Box><Typography variant="caption" color="text.secondary" fontWeight={600}>Product ID</Typography><Typography variant="body2">{currentData.productIdentifier || '-'}</Typography></Box>
               )}
             </Box>
             <Box sx={{ gridColumn: 'span 2' }}>
               {isEditMode ? (
-                <TextField label="Vendor Fabric Code" value={editData.vendorFabricCode || ''} onChange={(e) => setEditData({...editData, vendorFabricCode: e.target.value})} fullWidth size="small" />
+                <TextField label="Vendor Fabric Code" value={editData.vendorFabricCode || ''} onChange={(e) => setEditData({ ...editData, vendorFabricCode: e.target.value })} fullWidth size="small" />
               ) : (
                 <Box><Typography variant="caption" color="text.secondary" fontWeight={600}>Vendor Fabric Code</Typography><Typography variant="body2">{currentData.vendorFabricCode || '-'}</Typography></Box>
               )}
@@ -241,13 +292,6 @@ export default function ProductViewDialog({
                 )}
               </Box>
             </Box>
-            <Box sx={{ gridColumn: 'span 6' }}>
-              {isEditMode ? (
-                <TextField label="Description" value={editData.productdescription || ''} onChange={(e) => setEditData({...editData, productdescription: e.target.value})} fullWidth multiline rows={2} size="small" />
-              ) : (
-                <Box><Typography variant="caption" color="text.secondary" fontWeight={600}>Description</Typography><Typography variant="body2">{currentData.productdescription || '-'}</Typography></Box>
-              )}
-            </Box>
           </Box>
         </Box>
 
@@ -262,7 +306,7 @@ export default function ProductViewDialog({
                 {isEditMode ? (
                   <FormControl fullWidth size="small">
                     <InputLabel>{field.charAt(0).toUpperCase() + field.slice(1)}</InputLabel>
-                    <Select value={editData[field] || ''} onChange={(e) => setEditData({...editData, [field]: e.target.value})} label={field.charAt(0).toUpperCase() + field.slice(1)}>
+                    <Select value={editData[field] || ''} onChange={(e) => setEditData({ ...editData, [field]: e.target.value })} label={field.charAt(0).toUpperCase() + field.slice(1)}>
                       {dropdowns[field]?.map((opt: any) => <MenuItem key={opt._id} value={opt._id}>{opt.name}</MenuItem>)}
                     </Select>
                   </FormControl>
@@ -301,11 +345,11 @@ export default function ProductViewDialog({
                     if (value) {
                       const currentItems = Array.isArray(editData.subsuitable) ? editData.subsuitable : [];
                       // Check if it's a comma-separated string in array
-                      const flatItems = currentItems.flatMap((item: string) => 
+                      const flatItems = currentItems.flatMap((item: string) =>
                         item.includes(',') ? item.split(',').map(s => s.trim()) : [item]
                       );
                       flatItems.push(value);
-                      setEditData({...editData, subsuitable: [flatItems.join(',')]});
+                      setEditData({ ...editData, subsuitable: [flatItems.join(',')] });
                       input.value = '';
                     }
                   }
@@ -313,21 +357,21 @@ export default function ProductViewDialog({
               />
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 2 }}>
                 {Array.isArray(editData.subsuitable) && editData.subsuitable.length > 0 ? (
-                  editData.subsuitable.flatMap((item: string) => 
+                  editData.subsuitable.flatMap((item: string) =>
                     item.includes(',') ? item.split(',').map(s => s.trim()) : [item]
                   ).map((item: string, i: number) => (
-                    <Chip 
-                      key={i} 
-                      label={item} 
-                      size="small" 
-                      color="primary" 
+                    <Chip
+                      key={i}
+                      label={item}
+                      size="small"
+                      color="primary"
                       variant="outlined"
                       onDelete={() => {
-                        const currentItems = editData.subsuitable.flatMap((it: string) => 
+                        const currentItems = editData.subsuitable.flatMap((it: string) =>
                           it.includes(',') ? it.split(',').map(s => s.trim()) : [it]
                         );
                         currentItems.splice(i, 1);
-                        setEditData({...editData, subsuitable: currentItems.length > 0 ? [currentItems.join(',')] : []});
+                        setEditData({ ...editData, subsuitable: currentItems.length > 0 ? [currentItems.join(',')] : [] });
                       }}
                     />
                   ))
@@ -339,7 +383,7 @@ export default function ProductViewDialog({
           ) : (
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
               {Array.isArray(currentData.subsuitable) && currentData.subsuitable.length > 0 ? (
-                currentData.subsuitable.flatMap((item: string) => 
+                currentData.subsuitable.flatMap((item: string) =>
                   item.includes(',') ? item.split(',').map(s => s.trim()) : [item]
                 ).map((item: string, i: number) => (
                   <Chip key={i} label={item} size="small" color="primary" variant="outlined" />
@@ -370,7 +414,7 @@ export default function ProductViewDialog({
                     const value = input.value.trim();
                     if (value) {
                       const currentItems = Array.isArray(editData.leadtime) ? editData.leadtime : [];
-                      setEditData({...editData, leadtime: [...currentItems, value]});
+                      setEditData({ ...editData, leadtime: [...currentItems, value] });
                       input.value = '';
                     }
                   }
@@ -379,14 +423,14 @@ export default function ProductViewDialog({
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 2 }}>
                 {Array.isArray(editData.leadtime) && editData.leadtime.length > 0 ? (
                   editData.leadtime.map((time: string, i: number) => (
-                    <Chip 
-                      key={i} 
-                      label={`${time} days`} 
+                    <Chip
+                      key={i}
+                      label={`${time} days`}
                       size="small"
                       onDelete={() => {
                         const newLeadtime = [...editData.leadtime];
                         newLeadtime.splice(i, 1);
-                        setEditData({...editData, leadtime: newLeadtime});
+                        setEditData({ ...editData, leadtime: newLeadtime });
                       }}
                     />
                   ))
@@ -424,7 +468,7 @@ export default function ProductViewDialog({
             ].map(({ field, label, editable, type }) => (
               <Box key={field}>
                 {isEditMode && editable ? (
-                  <TextField label={label} type={type || 'text'} value={editData[field] || ''} onChange={(e) => setEditData({...editData, [field]: e.target.value})} fullWidth size="small" />
+                  <TextField label={label} type={type || 'text'} value={editData[field] || ''} onChange={(e) => setEditData({ ...editData, [field]: e.target.value })} fullWidth size="small" />
                 ) : (
                   <Box><Typography variant="caption" color="text.secondary" fontWeight={600}>{label}</Typography><Typography variant="body2">{currentData[field] || '-'}</Typography></Box>
                 )}
@@ -446,7 +490,7 @@ export default function ProductViewDialog({
             ].map(({ field, label }) => (
               <Box key={field}>
                 {isEditMode ? (
-                  <TextField label={label} type="number" value={editData[field] || ''} onChange={(e) => setEditData({...editData, [field]: e.target.value})} fullWidth size="small" />
+                  <TextField label={label} type="number" value={editData[field] || ''} onChange={(e) => setEditData({ ...editData, [field]: e.target.value })} fullWidth size="small" />
                 ) : (
                   <Box><Typography variant="caption" color="text.secondary" fontWeight={600}>{label}</Typography><Typography variant="body2">{currentData[field] || '-'}</Typography></Box>
                 )}
@@ -458,30 +502,59 @@ export default function ProductViewDialog({
         {/* Flags & Ratings - 6 columns */}
         <Box sx={{ mb: 3, p: 3, bgcolor: 'white', borderRadius: 2 }}>
           <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: '#2c3e50' }}>
-            ⭐ Flags & Ratings
+            🏷️ Product Tags & Ratings
           </Typography>
-          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 2, alignItems: 'center' }}>
-            {[
-              { field: 'popularproduct', label: 'Popular Product' },
-              { field: 'topratedproduct', label: 'Top Rated' },
-              { field: 'landingPageProduct', label: 'Landing Page' },
-              { field: 'shopyProduct', label: 'Shopy Product' },
-            ].map(({ field, label }) => (
-              <Box key={field}>
-                {isEditMode ? (
-                  <FormControlLabel control={<Checkbox checked={Boolean(editData[field])} onChange={(e) => setEditData({...editData, [field]: e.target.checked})} />} label={label} />
-                ) : (
-                  <Box><Typography variant="caption" color="text.secondary" fontWeight={600}>{label}</Typography><Typography variant="body2">{currentData[field] ? '✅ Yes' : '❌ No'}</Typography></Box>
-                )}
-              </Box>
-            ))}
+          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 2, alignItems: 'start' }}>
+            <Box sx={{ gridColumn: 'span 4' }}>
+              {isEditMode ? (
+                <Autocomplete
+                  multiple
+                  freeSolo
+                  options={[]}
+                  value={editData.productTag || []}
+                  onChange={(_, newValue) => setEditData({ ...editData, productTag: newValue as string[] })}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Product Tags"
+                      placeholder="Add product tags..."
+                      size="small"
+                    />
+                  )}
+                  renderTags={(value, getTagProps) =>
+                    value.map((option, index) => (
+                      <Chip
+                        {...getTagProps({ index })}
+                        key={index}
+                        label={option}
+                        size="small"
+                        sx={{ m: 0.5 }}
+                      />
+                    ))
+                  }
+                />
+              ) : (
+                <Box>
+                  <Typography variant="caption" color="text.secondary" fontWeight={600}>Product Tags</Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
+                    {currentData.productTag && Array.isArray(currentData.productTag) && currentData.productTag.length > 0 ? (
+                      currentData.productTag.map((tag: string, index: number) => (
+                        <Chip key={index} label={tag} size="small" sx={{ bgcolor: '#f3e5f5', color: '#7b1fa2', fontWeight: 500 }} />
+                      ))
+                    ) : (
+                      <Typography variant="body2">-</Typography>
+                    )}
+                  </Box>
+                </Box>
+              )}
+            </Box>
             {[
               { field: 'rating_value', label: 'Rating Value' },
               { field: 'rating_count', label: 'Rating Count' },
             ].map(({ field, label }) => (
               <Box key={field}>
                 {isEditMode ? (
-                  <TextField label={label} type="number" value={editData[field] || ''} onChange={(e) => setEditData({...editData, [field]: e.target.value})} fullWidth size="small" />
+                  <TextField label={label} type="number" value={editData[field] || ''} onChange={(e) => setEditData({ ...editData, [field]: e.target.value })} fullWidth size="small" />
                 ) : (
                   <Box><Typography variant="caption" color="text.secondary" fontWeight={600}>{label}</Typography><Typography variant="body2">{currentData[field] || '-'}</Typography></Box>
                 )}
@@ -498,21 +571,21 @@ export default function ProductViewDialog({
           <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 2 }}>
             <Box sx={{ gridColumn: 'span 2' }}>
               {isEditMode ? (
-                <TextField label="OG Type" value={editData.ogType || ''} onChange={(e) => setEditData({...editData, ogType: e.target.value})} fullWidth size="small" placeholder="e.g., product" />
+                <TextField label="OG Type" value={editData.ogType || ''} onChange={(e) => setEditData({ ...editData, ogType: e.target.value })} fullWidth size="small" placeholder="e.g., product" />
               ) : (
                 <Box><Typography variant="caption" color="text.secondary" fontWeight={600}>OG Type</Typography><Typography variant="body2">{currentData.ogType || '-'}</Typography></Box>
               )}
             </Box>
             <Box sx={{ gridColumn: 'span 2' }}>
               {isEditMode ? (
-                <TextField label="Twitter Card" value={editData.twitterCard || ''} onChange={(e) => setEditData({...editData, twitterCard: e.target.value})} fullWidth size="small" placeholder="e.g., summary_large_image" />
+                <TextField label="Twitter Card" value={editData.twitterCard || ''} onChange={(e) => setEditData({ ...editData, twitterCard: e.target.value })} fullWidth size="small" placeholder="e.g., summary_large_image" />
               ) : (
                 <Box><Typography variant="caption" color="text.secondary" fontWeight={600}>Twitter Card</Typography><Typography variant="body2">{currentData.twitterCard || '-'}</Typography></Box>
               )}
             </Box>
             <Box sx={{ gridColumn: 'span 2' }}>
               {isEditMode ? (
-                <TextField label="OG/Twitter Image" value={editData.ogImage_twitterimage || ''} onChange={(e) => setEditData({...editData, ogImage_twitterimage: e.target.value})} fullWidth size="small" placeholder="https://..." />
+                <TextField label="OG/Twitter Image" value={editData.ogImage_twitterimage || ''} onChange={(e) => setEditData({ ...editData, ogImage_twitterimage: e.target.value })} fullWidth size="small" placeholder="https://..." />
               ) : (
                 <Box><Typography variant="caption" color="text.secondary" fontWeight={600}>OG/Twitter Image</Typography><Typography variant="body2" sx={{ wordBreak: 'break-all' }}>{currentData.ogImage_twitterimage || '-'}</Typography></Box>
               )}
@@ -528,30 +601,36 @@ export default function ProductViewDialog({
           <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 2 }}>
             <Box sx={{ gridColumn: 'span 3' }}>
               {isEditMode ? (
-                <TextField label="Title" value={editData.productlocationtitle || ''} onChange={(e) => setEditData({...editData, productlocationtitle: e.target.value})} fullWidth size="small" />
+                <TextField label="Product Title" value={editData.productTitle || ''} onChange={(e) => setEditData({ ...editData, productTitle: e.target.value })} fullWidth size="small" />
               ) : (
-                <Box><Typography variant="caption" color="text.secondary" fontWeight={600}>Title</Typography><Typography variant="body2">{currentData.productlocationtitle || '-'}</Typography></Box>
+                <Box><Typography variant="caption" color="text.secondary" fontWeight={600}>Product Title</Typography><Typography variant="body2">{currentData.productTitle || '-'}</Typography></Box>
               )}
             </Box>
             <Box sx={{ gridColumn: 'span 3' }}>
               {isEditMode ? (
-                <TextField label="Tagline" value={editData.productlocationtagline || ''} onChange={(e) => setEditData({...editData, productlocationtagline: e.target.value})} fullWidth size="small" />
+                <TextField label="Product Tagline" value={editData.productTagline || ''} onChange={(e) => setEditData({ ...editData, productTagline: e.target.value })} fullWidth size="small" />
               ) : (
-                <Box><Typography variant="caption" color="text.secondary" fontWeight={600}>Tagline</Typography><Typography variant="body2">{currentData.productlocationtagline || '-'}</Typography></Box>
+                <Box><Typography variant="caption" color="text.secondary" fontWeight={600}>Product Tagline</Typography><Typography variant="body2">{currentData.productTagline || '-'}</Typography></Box>
               )}
             </Box>
             <Box sx={{ gridColumn: 'span 6' }}>
               {isEditMode ? (
-                <TextField label="Description 1" value={editData.productlocationdescription1 || ''} onChange={(e) => setEditData({...editData, productlocationdescription1: e.target.value})} fullWidth multiline rows={2} size="small" />
+                <TextField label="Short Product Description" value={editData.shortProductDescription || ''} onChange={(e) => setEditData({ ...editData, shortProductDescription: e.target.value })} fullWidth multiline rows={2} size="small" />
               ) : (
-                <Box><Typography variant="caption" color="text.secondary" fontWeight={600}>Description 1</Typography><Typography variant="body2">{currentData.productlocationdescription1 || '-'}</Typography></Box>
+                <Box>
+                  <Typography variant="caption" color="text.secondary" fontWeight={600}>Short Product Description</Typography>
+                  <Box sx={{ fontSize: '0.875rem', lineHeight: 1.43 }} dangerouslySetInnerHTML={{ __html: currentData.shortProductDescription || '-' }} />
+                </Box>
               )}
             </Box>
             <Box sx={{ gridColumn: 'span 6' }}>
               {isEditMode ? (
-                <TextField label="Description 2" value={editData.productlocationdescription2 || ''} onChange={(e) => setEditData({...editData, productlocationdescription2: e.target.value})} fullWidth multiline rows={2} size="small" />
+                <TextField label="Full Product Description" value={editData.fullProductDescription || ''} onChange={(e) => setEditData({ ...editData, fullProductDescription: e.target.value })} fullWidth multiline rows={2} size="small" />
               ) : (
-                <Box><Typography variant="caption" color="text.secondary" fontWeight={600}>Description 2</Typography><Typography variant="body2">{currentData.productlocationdescription2 || '-'}</Typography></Box>
+                <Box>
+                  <Typography variant="caption" color="text.secondary" fontWeight={600}>Full Product Description</Typography>
+                  <Box sx={{ fontSize: '0.875rem', lineHeight: 1.43 }} dangerouslySetInnerHTML={{ __html: currentData.fullProductDescription || '-' }} />
+                </Box>
               )}
             </Box>
           </Box>

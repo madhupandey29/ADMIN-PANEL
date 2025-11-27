@@ -480,6 +480,29 @@ function EnhancedDataTable<T extends Record<string, any>>({
       {/* Compact Toolbar - Search and Manage Columns */}
       {(searchable || enableColumnManagement || activeFiltersCount > 0 || selected.size > 0) && (
         <Box sx={{ mb: 0.5, display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'nowrap' }}>
+          {/* Manage Columns - LEFT ALIGNED */}
+          {enableColumnManagement && (
+            <Tooltip title="Manage Columns">
+              <IconButton
+                size="small"
+                onClick={() => setColumnManagementOpen(true)}
+                sx={{
+                  border: '1.5px solid',
+                  borderColor: 'rgba(0, 0, 0, 0.23)',
+                  borderRadius: '6px',
+                  width: 32,
+                  height: 32,
+                  '&:hover': {
+                    borderColor: 'rgba(0, 0, 0, 0.4)',
+                    bgcolor: 'action.hover'
+                  }
+                }}
+              >
+                <ViewColumnIcon sx={{ fontSize: 16 }} />
+              </IconButton>
+            </Tooltip>
+          )}
+          
           {/* Search Bar */}
           {searchable && (
             <TextField
@@ -541,31 +564,6 @@ function EnhancedDataTable<T extends Record<string, any>>({
             <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '12px', whiteSpace: 'nowrap' }}>
               {selected.size} selected
             </Typography>
-          )}
-          
-          <Box sx={{ flex: 1 }} />
-          
-          {/* Manage Columns */}
-          {enableColumnManagement && (
-            <Tooltip title="Manage Columns">
-              <IconButton
-                size="small"
-                onClick={() => setColumnManagementOpen(true)}
-                sx={{
-                  border: '1.5px solid',
-                  borderColor: 'rgba(0, 0, 0, 0.23)',
-                  borderRadius: '6px',
-                  width: 32,
-                  height: 32,
-                  '&:hover': {
-                    borderColor: 'rgba(0, 0, 0, 0.4)',
-                    bgcolor: 'action.hover'
-                  }
-                }}
-              >
-                <ViewColumnIcon sx={{ fontSize: 16 }} />
-              </IconButton>
-            </Tooltip>
           )}
         </Box>
       )}

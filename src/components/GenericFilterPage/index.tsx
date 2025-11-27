@@ -261,7 +261,7 @@ export default function GenericFilterPage({ config }: GenericFilterPageProps) {
         </Box>
       )}
 
-      {/* Ultra Compact Header - Icon, Title, Search, Export, Add, Manage Columns ALL in ONE row */}
+      {/* Ultra Compact Header - Icon, Title, Add, Export ALL in ONE row - LEFT ALIGNED */}
       <Box sx={{ 
         mb: 0.5, 
         mt: 0,
@@ -281,8 +281,27 @@ export default function GenericFilterPage({ config }: GenericFilterPageProps) {
           </Typography>
         </Box>
 
-        {/* Right: Export, Add */}
-        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flex: '0 0 auto', ml: 'auto' }}>
+        {/* Left: Add and Export buttons */}
+        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flex: '0 0 auto' }}>
+          {features.hasAdd && (
+            <Button
+              variant="contained"
+              size="small"
+              color="success"
+              startIcon={<AddIcon sx={{ fontSize: 16 }} />}
+              onClick={handleAdd}
+              disabled={pageAccess === 'only view'}
+              sx={{ 
+                whiteSpace: 'nowrap',
+                py: 0.5,
+                px: 1.5,
+                fontSize: '13px',
+                minHeight: 32
+              }}
+            >
+              Add {config.name}
+            </Button>
+          )}
           {features.hasExport && (
             <Button
               variant="outlined"
@@ -303,25 +322,6 @@ export default function GenericFilterPage({ config }: GenericFilterPageProps) {
               }}
             >
               Export ({selectedItems.length})
-            </Button>
-          )}
-          {features.hasAdd && (
-            <Button
-              variant="contained"
-              size="small"
-              color="success"
-              startIcon={<AddIcon sx={{ fontSize: 16 }} />}
-              onClick={handleAdd}
-              disabled={pageAccess === 'only view'}
-              sx={{ 
-                whiteSpace: 'nowrap',
-                py: 0.5,
-                px: 1.5,
-                fontSize: '13px',
-                minHeight: 32
-              }}
-            >
-              Add {config.name}
             </Button>
           )}
         </Box>

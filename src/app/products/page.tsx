@@ -20,7 +20,7 @@ interface Product {
   name: string;
   slug?: string;
   productdescription?: string;
-  img?: string;
+  image3?: string;
   image1?: string;
   image2?: string;
   altimg1?: string;
@@ -45,22 +45,21 @@ interface Product {
   video?: string;
   videoThumbnail?: string;
   altvideo?: string;
+  videourl?: string;
+  videoalt?: string;
   purchasePrice?: number | string;
   salesPrice?: number | string;
   vendorFabricCode?: string;
   productIdentifier?: string;
   leadtime?: string[];
   sku?: string;
-  popularproduct?: boolean;
-  topratedproduct?: boolean;
-  landingPageProduct?: boolean;
-  shopyProduct?: boolean;
   rating_value?: string | number;
   rating_count?: string | number;
-  productlocationtitle?: string;
-  productlocationtagline?: string;
-  productlocationdescription1?: string;
-  productlocationdescription2?: string;
+  productTitle?: string;
+  productTagline?: string;
+  shortProductDescription?: string;
+  fullProductDescription?: string;
+  productTag?: string[];
   ogType?: string;
   twitterCard?: string;
   ogImage_twitterimage?: string;
@@ -133,7 +132,7 @@ export default function ProductPage() {
     oz?: number | string;
     cm?: number | string;
     inch?: number | string;
-    img?: File | string;
+    image3?: File | string;
     image1?: File | string;
     image2?: File | string;
     altimg1?: string;
@@ -142,22 +141,21 @@ export default function ProductPage() {
     video?: File | string;
     videoThumbnail?: string;
     altvideo?: string;
+    videourl?: string;
+    videoalt?: string;
     purchasePrice?: number | string;
     salesPrice?: number | string;
     vendorFabricCode?: string;
     productIdentifier?: string;
     leadtime?: string[];
     sku?: string;
-    popularproduct?: boolean;
-    topratedproduct?: boolean;
-    landingPageProduct?: boolean;
-    shopyProduct?: boolean;
     rating_value?: number | string;
     rating_count?: number | string;
-    productlocationtitle?: string;
-    productlocationtagline?: string;
-    productlocationdescription1?: string;
-    productlocationdescription2?: string;
+    productTitle?: string;
+    productTagline?: string;
+    shortProductDescription?: string;
+    fullProductDescription?: string;
+    productTag?: string[];
     ogType?: string;
     twitterCard?: string;
     ogImage_twitterimage?: string;
@@ -184,7 +182,7 @@ export default function ProductPage() {
     oz: "",
     cm: "",
     inch: "",
-    img: undefined,
+    image3: undefined,
     image1: undefined,
     image2: undefined,
     altimg1: "",
@@ -192,32 +190,31 @@ export default function ProductPage() {
     altimg3: "",
     video: undefined,
     altvideo: "",
+    videourl: "",
+    videoalt: "",
     purchasePrice: "",
     salesPrice: "",
     vendorFabricCode: "",
     productIdentifier: "",
     leadtime: [],
     sku: "",
-    popularproduct: false,
-    topratedproduct: false,
-    landingPageProduct: false,
-    shopyProduct: false,
     rating_value: "",
     rating_count: "",
-    productlocationtitle: "",
-    productlocationtagline: "",
-    productlocationdescription1: "",
-    productlocationdescription2: "",
+    productTitle: "",
+    productTagline: "",
+    shortProductDescription: "",
+    fullProductDescription: "",
+    productTag: [],
     ogType: "",
     twitterCard: "summary_large_image",
     ogImage_twitterimage: "",
   });
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [image3Preview, setImage3Preview] = useState<string | null>(null);
   const [image1Preview, setImage1Preview] = useState<string | null>(null);
   const [image2Preview, setImage2Preview] = useState<string | null>(null);
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
-  const [formImgDims, setFormImgDims] = useState<{ img?: [number, number], image1?: [number, number], image2?: [number, number] }>({});
+  const [formImgDims, setFormImgDims] = useState<{ image3?: [number, number], image1?: [number, number], image2?: [number, number] }>({});
   const [formVideoDims, setFormVideoDims] = useState<[number, number] | undefined>(undefined);
 
   // State for subsuitable builder
@@ -260,7 +257,7 @@ export default function ProductPage() {
   ], []);
 
   // Add state for image dimensions
-  const [imgDims, setImgDims] = useState<{ img?: [number, number], image1?: [number, number], image2?: [number, number] }>({});
+  const [imgDims, setImgDims] = useState<{ image3?: [number, number], image1?: [number, number], image2?: [number, number] }>({});
   // Add state for video dimensions
   const [videoDims, setVideoDims] = useState<[number, number] | undefined>(undefined);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -271,7 +268,7 @@ export default function ProductPage() {
   // Define columns for EnhancedDataTable
   const columns: Column<Product>[] = useMemo(() => [
     {
-      id: 'img',
+      id: 'image3',
       label: 'Image',
       type: 'image',
       minWidth: 60,
@@ -376,31 +373,16 @@ export default function ProductPage() {
       filterable: true,
       format: (value, product: Product) => product.vendorFabricCode || '-',
     },
-    {
-      id: 'popularproduct',
-      label: 'Popular',
-      type: 'boolean',
-    },
-    {
-      id: 'topratedproduct',
-      label: 'Top Rated',
-      type: 'boolean',
-    },
+
   ], []);
 
   // Statistics
   const stats = useMemo(() => {
     const total = products.length;
-    const popular = products.filter(p => p.popularproduct).length;
-    const topRated = products.filter(p => p.topratedproduct).length;
-    const landingPage = products.filter(p => p.landingPageProduct).length;
     const withPrice = products.filter(p => p.salesPrice).length;
 
     return {
       total,
-      popular,
-      topRated,
-      landingPage,
       withPrice,
     };
   }, [products]);
@@ -615,6 +597,14 @@ export default function ProductPage() {
       // Generate slug from name if not exists
       const slug = product.slug || generateSlug(product.name);
 
+      // Handle productTag - ensure we always have an array
+      let productTag: string[] = [];
+      if (product.productTag) {
+        if (Array.isArray(product.productTag)) {
+          productTag = product.productTag.filter(Boolean) as string[];
+        }
+      }
+
       const formData = {
         name: product.name,
         slug: slug,
@@ -635,7 +625,7 @@ export default function ProductPage() {
         oz: product.oz !== undefined && product.oz !== null ? String(product.oz) : "",
         cm: product.cm !== undefined && product.cm !== null ? String(product.cm) : "",
         inch: product.inch !== undefined && product.inch !== null ? String(product.inch) : "",
-        img: product.img,
+        image3: product.image3,
         image1: product.image1,
         image2: product.image2,
         altimg1: product.altimg1 || "",
@@ -643,22 +633,21 @@ export default function ProductPage() {
         altimg3: product.altimg3 || "",
         video: product.video,
         altvideo: product.altvideo || "",
+        videourl: product.videourl || "",
+        videoalt: product.videoalt || "",
         purchasePrice: product.purchasePrice !== undefined ? String(product.purchasePrice) : "",
         salesPrice: product.salesPrice !== undefined ? String(product.salesPrice) : "",
         vendorFabricCode: product.vendorFabricCode || "",
         productIdentifier: product.productIdentifier || "",
         leadtime: leadtime,
         sku: product.sku || "",
-        popularproduct: product.popularproduct || false,
-        topratedproduct: product.topratedproduct || false,
-        landingPageProduct: product.landingPageProduct || false,
-        shopyProduct: product.shopyProduct || false,
         rating_value: product.rating_value || "",
         rating_count: product.rating_count || "",
-        productlocationtitle: product.productlocationtitle || "",
-        productlocationtagline: product.productlocationtagline || "",
-        productlocationdescription1: product.productlocationdescription1 || "",
-        productlocationdescription2: product.productlocationdescription2 || "",
+        productTitle: product.productTitle || "",
+        productTagline: product.productTagline || "",
+        shortProductDescription: product.shortProductDescription || "",
+        fullProductDescription: product.fullProductDescription || "",
+        productTag: productTag,
         ogType: product.ogType || "",
         twitterCard: product.twitterCard || "summary_large_image",
         ogImage_twitterimage: product.ogImage_twitterimage || ""
@@ -667,7 +656,7 @@ export default function ProductPage() {
       console.log('Form data to be set:', formData); // Debug log
       setForm(formData);
       setEditId(product._id || null);
-      setImagePreview(getSafeImageUrl(product.img));
+      setImage3Preview(getSafeImageUrl(product.image3));
       setImage1Preview(getSafeImageUrl(product.image1));
       setImage2Preview(getSafeImageUrl(product.image2));
       setVideoPreview(getSafeImageUrl(product.video));
@@ -690,25 +679,25 @@ export default function ProductPage() {
         oz: "",
         cm: "",
         inch: "",
-        img: undefined,
+        image3: undefined,
         image1: undefined,
         image2: undefined,
         video: undefined,
       });
       setEditId(null);
-      setImagePreview(null);
+      setImage3Preview(null);
       setImage1Preview(null);
       setImage2Preview(null);
       setVideoPreview(null);
       setEditableSubsuitableItems([]);
     }
     setOpen(true);
-  }, [setForm, setEditId, setImagePreview, setImage1Preview, setImage2Preview, setVideoPreview, setOpen]);
+  }, [setForm, setEditId, setImage3Preview, setImage1Preview, setImage2Preview, setVideoPreview, setOpen]);
 
   const handleClose = useCallback(() => {
     setOpen(false);
     setEditId(null);
-    setImagePreview(null);
+    setImage3Preview(null);
     setImage1Preview(null);
     setImage2Preview(null);
     setVideoPreview(null);
@@ -732,7 +721,7 @@ export default function ProductPage() {
       oz: "",
       cm: "",
       inch: "",
-      img: undefined,
+      image3: undefined,
       image1: undefined,
       image2: undefined,
       altimg1: "",
@@ -740,6 +729,8 @@ export default function ProductPage() {
       altimg3: "",
       video: undefined,
       altvideo: "",
+      videourl: "",
+      videoalt: "",
     });
   }, []);
 
@@ -830,7 +821,7 @@ export default function ProductPage() {
     setSelectedProduct(null);
   }, []);
 
-  const handleDeleteImage = useCallback(async (imageType: 'img' | 'image1' | 'image2') => {
+  const handleDeleteImage = useCallback(async (imageType: 'image3' | 'image1' | 'image2') => {
     try {
       // If this is an existing image (not a new upload), delete it from the server
       if (form[imageType] && typeof form[imageType] === 'string' && editId) {
@@ -851,9 +842,9 @@ export default function ProductPage() {
       }));
 
       // Clear the preview and dimensions
-      if (imageType === 'img') {
-        setImagePreview(null);
-        setFormImgDims(dims => ({ ...dims, img: undefined }));
+      if (imageType === 'image3') {
+        setImage3Preview(null);
+        setFormImgDims(dims => ({ ...dims, image3: undefined }));
       }
       if (imageType === 'image1') {
         setImage1Preview(null);
@@ -865,7 +856,7 @@ export default function ProductPage() {
       }
 
       // Reset the file input
-      if (imageType === 'img' && fileInputRef.current) fileInputRef.current.value = '';
+      if (imageType === 'image3' && fileInputRef.current) fileInputRef.current.value = '';
       if (imageType === 'image1' && image1InputRef.current) image1InputRef.current.value = '';
       if (imageType === 'image2' && image2InputRef.current) image2InputRef.current.value = '';
 
@@ -878,8 +869,8 @@ export default function ProductPage() {
   const handleImageChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setForm((prev) => ({ ...prev, img: file }));
-      setImagePreview(URL.createObjectURL(file));
+      setForm((prev) => ({ ...prev, image3: file }));
+      setImage3Preview(URL.createObjectURL(file));
     }
   }, []);
 
@@ -984,7 +975,7 @@ export default function ProductPage() {
 
       // Track which images were explicitly removed
       const deletedImages = {
-        img: processedForm.img === undefined && form.img !== undefined,
+        image3: processedForm.image3 === undefined && form.image3 !== undefined,
         image1: processedForm.image1 === undefined && form.image1 !== undefined,
         image2: processedForm.image2 === undefined && form.image2 !== undefined
       };
@@ -993,18 +984,29 @@ export default function ProductPage() {
       Object.entries(processedForm).forEach(([key, value]) => {
         if (value === undefined || value === null || value === '') {
           // If this is an image field that was explicitly set to undefined, mark it for deletion
-          if ((key === 'img' || key === 'image1' || key === 'image2') && deletedImages[key as keyof typeof deletedImages]) {
+          if ((key === 'image3' || key === 'image1' || key === 'image2') && deletedImages[key as keyof typeof deletedImages]) {
             formData.append(`delete_${key}`, 'true');
           }
           return;
         }
 
-        // Handle File uploads first
-        if (value instanceof File) {
-          formData.append(key, value);
-        } else if (key === 'colors' && Array.isArray(value)) {
+        if (key === 'colors' && Array.isArray(value)) {
           // Handle colors array
           value.forEach(v => formData.append('color[]', v));
+        } else if (value instanceof File) {
+          // Handle new file uploads
+          formData.append(key, value);
+        } else if (key === 'image3' || key === 'image1' || key === 'image2' || key === 'video') {
+          // Only append image fields if they're files
+          if (value instanceof File) {
+            formData.append(key, value);
+          } else if (typeof value === 'string' && value.startsWith('blob:')) {
+            // Skip blob URLs (they're just for preview)
+            return;
+          } else if (typeof value === 'string' && value) {
+            // If it's a non-empty string URL, include it as a string
+            formData.append(key, value);
+          }
         } else if (key === 'subsuitable' && Array.isArray(value)) {
           // Handle subsuitable array - split comma-separated string and send each item
           if (value.length > 0) {
@@ -1023,15 +1025,6 @@ export default function ProductPage() {
         } else if (Array.isArray(value)) {
           // Handle any other arrays by converting to JSON string
           formData.append(key, JSON.stringify(value));
-        } else if (key === 'img' || key === 'image1' || key === 'image2' || key === 'video') {
-          // Only append image fields if they're string URLs
-          if (typeof value === 'string' && value.startsWith('blob:')) {
-            // Skip blob URLs (they're just for preview)
-            return;
-          } else if (typeof value === 'string' && value) {
-            // If it's a non-empty string URL, include it as a string
-            formData.append(key, value);
-          }
         } else {
           // Handle all other fields
           // Convert values to string before appending
@@ -1135,6 +1128,14 @@ export default function ProductPage() {
         }
       }
 
+      // Handle productTag - ensure we always have an array
+      let productTag: string[] = [];
+      if (selected.productTag) {
+        if (Array.isArray(selected.productTag)) {
+          productTag = selected.productTag.filter(Boolean) as string[];
+        }
+      }
+
       setForm({
         name: selected.name,
         slug: selected.slug || '',
@@ -1155,7 +1156,7 @@ export default function ProductPage() {
         oz: selected.oz !== undefined && selected.oz !== null ? String(selected.oz) : "",
         cm: selected.cm !== undefined && selected.cm !== null ? String(selected.cm) : "",
         inch: selected.inch !== undefined && selected.inch !== null ? String(selected.inch) : "",
-        img: selected.img,
+        image3: selected.image3,
         image1: selected.image1,
         image2: selected.image2,
         altimg1: selected.altimg1 || "",
@@ -1163,34 +1164,33 @@ export default function ProductPage() {
         altimg3: selected.altimg3 || "",
         video: selected.video,
         altvideo: selected.altvideo || "",
+        videourl: selected.videourl || "",
+        videoalt: selected.videoalt || "",
         purchasePrice: selected.purchasePrice !== undefined ? String(selected.purchasePrice) : "",
         salesPrice: selected.salesPrice !== undefined ? String(selected.salesPrice) : "",
         vendorFabricCode: selected.vendorFabricCode || "",
         productIdentifier: selected.productIdentifier || "",
         leadtime: leadtime,
         sku: selected.sku || "",
-        popularproduct: selected.popularproduct || false,
-        topratedproduct: selected.topratedproduct || false,
-        landingPageProduct: selected.landingPageProduct || false,
-        shopyProduct: selected.shopyProduct || false,
         rating_value: selected.rating_value || "",
         rating_count: selected.rating_count || "",
-        productlocationtitle: selected.productlocationtitle || "",
-        productlocationtagline: selected.productlocationtagline || "",
-        productlocationdescription1: selected.productlocationdescription1 || "",
-        productlocationdescription2: selected.productlocationdescription2 || "",
+        productTitle: selected.productTitle || "",
+        productTagline: selected.productTagline || "",
+        shortProductDescription: selected.shortProductDescription || "",
+        fullProductDescription: selected.fullProductDescription || "",
+        productTag: productTag,
         ogType: selected.ogType || "",
         twitterCard: selected.twitterCard || "summary_large_image",
         ogImage_twitterimage: selected.ogImage_twitterimage || ""
       });
-      setImagePreview(selected.img ? getImageUrl(selected.img) || null : null);
+      setImage3Preview(selected.image3 ? getImageUrl(selected.image3) || null : null);
       setImage1Preview(selected.image1 ? getImageUrl(selected.image1) || null : null);
       setImage2Preview(selected.image2 ? getImageUrl(selected.image2) || null : null);
       setVideoPreview(selected.video ? getImageUrl(selected.video) || null : null);
     } else {
       setForm(prev => ({ ...prev, name: value.label || "" }));
     }
-  }, [products, getId, setForm, setImagePreview, setImage1Preview, setImage2Preview, setVideoPreview]);
+  }, [products, getId, setForm, setImage3Preview, setImage1Preview, setImage2Preview, setVideoPreview]);
 
   // Add effect to auto-calculate oz and inch
   // Only auto-calculate oz if oz is empty (not set from backend or user input)
@@ -1234,7 +1234,7 @@ export default function ProductPage() {
         </Box>
       )}
 
-      {/* Compact Header - Everything in ONE row */}
+      {/* Compact Header - Everything in ONE row - LEFT ALIGNED */}
       <Box sx={{ 
         mb: 0.5, 
         mt: 0,
@@ -1251,11 +1251,25 @@ export default function ProductPage() {
           </Typography>
         </Box>
 
-        {/* Middle: Search Bar - Will be shown by EnhancedDataTable */}
-        <Box sx={{ flex: '1 1 auto' }} />
-
-        {/* Right: Export, Add */}
+        {/* Left: Add and Export buttons */}
         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flex: '0 0 auto' }}>
+          <Button
+            variant="contained"
+            size="small"
+            color="success"
+            startIcon={<AddIcon sx={{ fontSize: 16 }} />}
+            onClick={handleAdd}
+            disabled={pageAccess === 'only view'}
+            sx={{ 
+              whiteSpace: 'nowrap',
+              py: 0.5,
+              px: 1.5,
+              fontSize: '13px',
+              minHeight: 32
+            }}
+          >
+            Add New Product
+          </Button>
           <Button
             variant="outlined"
             size="small"
@@ -1275,23 +1289,6 @@ export default function ProductPage() {
             }}
           >
             Export ({selectedProducts.length})
-          </Button>
-          <Button
-            variant="contained"
-            size="small"
-            color="success"
-            startIcon={<AddIcon sx={{ fontSize: 16 }} />}
-            onClick={handleAdd}
-            disabled={pageAccess === 'only view'}
-            sx={{ 
-              whiteSpace: 'nowrap',
-              py: 0.5,
-              px: 1.5,
-              fontSize: '13px',
-              minHeight: 32
-            }}
-          >
-            Add New Product
           </Button>
         </Box>
       </Box>
@@ -1332,8 +1329,8 @@ export default function ProductPage() {
         dropdowns={dropdowns}
         refreshDropdown={refreshDropdown}
         handleProductSelect={handleProductSelect}
-        imagePreview={imagePreview}
-        setImagePreview={setImagePreview}
+        image3Preview={image3Preview}
+        setImage3Preview={setImage3Preview}
         image1Preview={image1Preview}
         setImage1Preview={setImage1Preview}
         image2Preview={image2Preview}

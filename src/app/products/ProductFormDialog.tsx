@@ -28,8 +28,8 @@ interface ProductFormDialogProps {
   dropdowns: any;
   refreshDropdown: (key: string) => Promise<void>;
   handleProductSelect: any;
-  imagePreview: string | null;
-  setImagePreview: React.Dispatch<React.SetStateAction<string | null>>;
+  image3Preview: string | null;
+  setImage3Preview: React.Dispatch<React.SetStateAction<string | null>>;
   image1Preview: string | null;
   setImage1Preview: React.Dispatch<React.SetStateAction<string | null>>;
   image2Preview: string | null;
@@ -39,7 +39,7 @@ interface ProductFormDialogProps {
   handleImageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleImage1Change: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleImage2Change: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  handleDeleteImage: (imageType: 'img' | 'image1' | 'image2') => Promise<void>;
+  handleDeleteImage: (imageType: 'image3' | 'image1' | 'image2') => Promise<void>;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   image1InputRef: React.RefObject<HTMLInputElement | null>;
   image2InputRef: React.RefObject<HTMLInputElement | null>;
@@ -62,7 +62,7 @@ interface ProductFormDialogProps {
 export default function ProductFormDialog({
   open, onClose, onSubmit, form, setForm, editId, submitting,
   products, dropdowns, refreshDropdown, handleProductSelect,
-  imagePreview, setImagePreview, image1Preview, setImage1Preview,
+  image3Preview, setImage3Preview, image1Preview, setImage1Preview,
   image2Preview, setImage2Preview, videoPreview, setVideoPreview,
   handleImageChange, handleImage1Change, handleImage2Change, handleDeleteImage,
   fileInputRef, image1InputRef, image2InputRef, videoInputRef,
@@ -142,20 +142,20 @@ export default function ProductFormDialog({
                 startIcon={<ImageIcon />}
                 disabled={pageAccess === 'only view'}
               >
-                {imagePreview ? 'Change' : 'Upload'}
+                {image3Preview ? 'Change' : 'Upload'}
               </Button>
-              {imagePreview && (
+              {image3Preview && (
                 <Box sx={{ position: 'relative', mt: 1 }}>
-                  <Image src={imagePreview || ''} alt="Main" width={200} height={200} style={{ width: '100%', height: 'auto', borderRadius: 8 }} 
-                    onLoad={e => setFormImgDims((dims: any) => ({ ...dims, img: [(e.target as HTMLImageElement).naturalWidth, (e.target as HTMLImageElement).naturalHeight] }))} />
+                  <Image src={image3Preview || ''} alt="Main" width={200} height={200} style={{ width: '100%', height: 'auto', borderRadius: 8 }} 
+                    onLoad={e => setFormImgDims((dims: any) => ({ ...dims, image3: [(e.target as HTMLImageElement).naturalWidth, (e.target as HTMLImageElement).naturalHeight] }))} />
                   <IconButton
                     size="small"
-                    onClick={() => handleDeleteImage('img')}
+                    onClick={() => handleDeleteImage('image3')}
                     sx={{ position: 'absolute', top: 4, right: 4, bgcolor: 'error.main', color: 'white', '&:hover': { bgcolor: 'error.dark' } }}
                   >
                     <DeleteIcon fontSize="small" />
                   </IconButton>
-                  {formImgDims?.img && <Typography variant="caption" display="block">{formImgDims.img[0]}×{formImgDims.img[1]}</Typography>}
+                  {formImgDims?.image3 && <Typography variant="caption" display="block">{formImgDims.image3[0]}×{formImgDims.image3[1]}</Typography>}
                 </Box>
               )}
             </Box>
@@ -222,12 +222,19 @@ export default function ProductFormDialog({
             </Box>
           </Box>
 
-          {/* Alt Text */}
-          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 2, mt: 2 }}>
-            <TextField label="Alt Text - Main" value={form.altimg1 || ''} onChange={(e) => setForm((prev: any) => ({ ...prev, altimg1: e.target.value }))} size="small" disabled={pageAccess === 'only view'} />
-            <TextField label="Alt Text - Image 1" value={form.altimg2 || ''} onChange={(e) => setForm((prev: any) => ({ ...prev, altimg2: e.target.value }))} size="small" disabled={pageAccess === 'only view'} />
-            <TextField label="Alt Text - Image 2" value={form.altimg3 || ''} onChange={(e) => setForm((prev: any) => ({ ...prev, altimg3: e.target.value }))} size="small" disabled={pageAccess === 'only view'} />
-            <TextField label="Alt Text - Video" value={form.altvideo || ''} onChange={(e) => setForm((prev: any) => ({ ...prev, altvideo: e.target.value }))} size="small" disabled={pageAccess === 'only view'} />
+          {/* Alternative Media Details */}
+          <Typography variant="subtitle1" sx={{ fontWeight: 600, mt: 3, mb: 2, color: '#2c3e50' }}>
+            Alternative Media Details
+          </Typography>
+          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 2 }}>
+            <TextField label="Alternative Image 1 Text" value={form.altimg1 || ''} onChange={(e) => setForm((prev: any) => ({ ...prev, altimg1: e.target.value }))} size="small" disabled={pageAccess === 'only view'} />
+            <TextField label="Alternative Image 2 Text" value={form.altimg2 || ''} onChange={(e) => setForm((prev: any) => ({ ...prev, altimg2: e.target.value }))} size="small" disabled={pageAccess === 'only view'} />
+            <TextField label="Alternative Image 3 Text" value={form.altimg3 || ''} onChange={(e) => setForm((prev: any) => ({ ...prev, altimg3: e.target.value }))} size="small" disabled={pageAccess === 'only view'} />
+            <TextField label="Video Alt Text" value={form.altvideo || ''} onChange={(e) => setForm((prev: any) => ({ ...prev, altvideo: e.target.value }))} size="small" disabled={pageAccess === 'only view'} />
+          </Box>
+          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2, mt: 2 }}>
+            <TextField label="YT Video URL" value={form.videourl || ''} onChange={(e) => setForm((prev: any) => ({ ...prev, videourl: e.target.value }))} size="small" placeholder="https://youtu.be/..." disabled={pageAccess === 'only view'} />
+            <TextField label="YT Video Alt Text" value={form.videoalt || ''} onChange={(e) => setForm((prev: any) => ({ ...prev, videoalt: e.target.value }))} size="small" disabled={pageAccess === 'only view'} />
           </Box>
         </Box>
 
@@ -242,9 +249,6 @@ export default function ProductFormDialog({
             </Box>
             <Box sx={{ gridColumn: 'span 3' }}>
               <TextField label="Slug" value={form.slug || ''} onChange={(e) => setForm((prev: any) => ({ ...prev, slug: e.target.value }))} fullWidth helperText="Auto-generated if empty" disabled={pageAccess === 'only view'} />
-            </Box>
-            <Box sx={{ gridColumn: 'span 6' }}>
-              <TextField label="Description" value={form.productdescription || ''} onChange={(e) => setForm((prev: any) => ({ ...prev, productdescription: e.target.value }))} fullWidth multiline rows={3} disabled={pageAccess === 'only view'} />
             </Box>
           </Box>
         </Box>
@@ -465,18 +469,59 @@ export default function ProductFormDialog({
           </Box>
         </Box>
 
-        {/* Flags & Ratings - 6 columns */}
+        {/* Product Tags & Ratings */}
         <Box sx={{ mb: 3, p: 3, bgcolor: 'white', borderRadius: 2 }}>
           <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: '#2c3e50' }}>
-            ⭐ Flags & Ratings
+            🏷️ Product Tags & Ratings
           </Typography>
-          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 2, alignItems: 'center' }}>
-            <FormControlLabel control={<Checkbox checked={Boolean(form.popularproduct)} onChange={e => setForm((prev: any) => ({ ...prev, popularproduct: e.target.checked }))} disabled={pageAccess === 'only view'} />} label="Popular" />
-            <FormControlLabel control={<Checkbox checked={Boolean(form.topratedproduct)} onChange={e => setForm((prev: any) => ({ ...prev, topratedproduct: e.target.checked }))} disabled={pageAccess === 'only view'} />} label="Top Rated" />
-            <FormControlLabel control={<Checkbox checked={Boolean(form.landingPageProduct)} onChange={e => setForm((prev: any) => ({ ...prev, landingPageProduct: e.target.checked }))} disabled={pageAccess === 'only view'} />} label="Landing Page" />
-            <FormControlLabel control={<Checkbox checked={Boolean(form.shopyProduct)} onChange={e => setForm((prev: any) => ({ ...prev, shopyProduct: e.target.checked }))} disabled={pageAccess === 'only view'} />} label="Shopy" />
-            <TextField label="Rating (0-5)" type="number" value={form.rating_value || ""} onChange={e => setForm((prev: any) => ({ ...prev, rating_value: e.target.value }))} inputProps={{ min: 0, max: 5, step: 0.1 }} disabled={pageAccess === 'only view'} />
-            <TextField label="Rating Count" type="number" value={form.rating_count || ""} onChange={e => setForm((prev: any) => ({ ...prev, rating_count: e.target.value }))} inputProps={{ min: 0 }} disabled={pageAccess === 'only view'} />
+          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 2, alignItems: 'start' }}>
+            <Box sx={{ gridColumn: 'span 4' }}>
+              <Autocomplete
+                multiple
+                freeSolo
+                options={[]}
+                value={form.productTag || []}
+                onChange={(_, newValue) => {
+                  setForm((prev: any) => ({ ...prev, productTag: newValue as string[] }));
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Product Tags"
+                    placeholder="Add product tags..."
+                    helperText="Press Enter to add multiple tags"
+                  />
+                )}
+                renderTags={(value, getTagProps) =>
+                  value.map((option, index) => (
+                    <Chip
+                      {...getTagProps({ index })}
+                      key={index}
+                      label={option}
+                      size="small"
+                      sx={{ m: 0.5 }}
+                    />
+                  ))
+                }
+                disabled={pageAccess === 'only view'}
+              />
+            </Box>
+            <TextField 
+              label="Rating (0-5)" 
+              type="number" 
+              value={form.rating_value || ""} 
+              onChange={e => setForm((prev: any) => ({ ...prev, rating_value: e.target.value }))} 
+              inputProps={{ min: 0, max: 5, step: 0.1 }} 
+              disabled={pageAccess === 'only view'} 
+            />
+            <TextField 
+              label="Rating Count" 
+              type="number" 
+              value={form.rating_count || ""} 
+              onChange={e => setForm((prev: any) => ({ ...prev, rating_count: e.target.value }))} 
+              inputProps={{ min: 0 }} 
+              disabled={pageAccess === 'only view'} 
+            />
           </Box>
         </Box>
 
@@ -526,16 +571,16 @@ export default function ProductFormDialog({
           </Typography>
           <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 2 }}>
             <Box sx={{ gridColumn: 'span 3' }}>
-              <TextField label="Title" value={form.productlocationtitle || ""} onChange={e => setForm((prev: any) => ({ ...prev, productlocationtitle: e.target.value }))} fullWidth disabled={pageAccess === 'only view'} />
+              <TextField label="Product Title" value={form.productTitle || ""} onChange={e => setForm((prev: any) => ({ ...prev, productTitle: e.target.value }))} fullWidth disabled={pageAccess === 'only view'} />
             </Box>
             <Box sx={{ gridColumn: 'span 3' }}>
-              <TextField label="Tagline" value={form.productlocationtagline || ""} onChange={e => setForm((prev: any) => ({ ...prev, productlocationtagline: e.target.value }))} fullWidth disabled={pageAccess === 'only view'} />
+              <TextField label="Product Tagline" value={form.productTagline || ""} onChange={e => setForm((prev: any) => ({ ...prev, productTagline: e.target.value }))} fullWidth disabled={pageAccess === 'only view'} />
             </Box>
             <Box sx={{ gridColumn: 'span 6' }}>
-              <TextField label="Description 1" value={form.productlocationdescription1 || ""} onChange={e => setForm((prev: any) => ({ ...prev, productlocationdescription1: e.target.value }))} fullWidth multiline rows={2} disabled={pageAccess === 'only view'} />
+              <TextField label="Short Product Description" value={form.shortProductDescription || ""} onChange={e => setForm((prev: any) => ({ ...prev, shortProductDescription: e.target.value }))} fullWidth multiline rows={2} disabled={pageAccess === 'only view'} />
             </Box>
             <Box sx={{ gridColumn: 'span 6' }}>
-              <TextField label="Description 2" value={form.productlocationdescription2 || ""} onChange={e => setForm((prev: any) => ({ ...prev, productlocationdescription2: e.target.value }))} fullWidth multiline rows={2} disabled={pageAccess === 'only view'} />
+              <TextField label="Full Product Description" value={form.fullProductDescription || ""} onChange={e => setForm((prev: any) => ({ ...prev, fullProductDescription: e.target.value }))} fullWidth multiline rows={2} disabled={pageAccess === 'only view'} />
             </Box>
           </Box>
         </Box>
