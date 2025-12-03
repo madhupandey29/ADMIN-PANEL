@@ -20,6 +20,7 @@ import {
   Checkbox,
   FormControlLabel,
   CircularProgress,
+   ListItemText  
 } from "@mui/material";
 import ClearIcon from "@mui/icons-material/Clear";
 import ImageIcon from "@mui/icons-material/Image";
@@ -133,10 +134,61 @@ export default function ProductFormDialog({
     { key: "vendor", label: "Vendor" },
     { key: "groupcode", label: "Groupcode" },
   ];
+const handleRatingChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const value = e.target.value;
+
+  // allow empty (so user can clear the field)
+  if (value === "") {
+    setForm((prev: any) => ({ ...prev, rating_value: "" }));
+    return;
+  }
+
+  // allow only numbers with max 2 decimals: e.g. 0, 4, 4.3, 4.34
+  const regex = /^([0-9])(\.[0-9]{0,2})?$/;
+  if (!regex.test(value)) {
+    // ignore invalid typing (like 4.345 or letters)
+    return;
+  }
+
+  const num = parseFloat(value);
+  // block negatives, more than 5, or NaN
+  if (Number.isNaN(num) || num < 0 || num > 5) {
+    return;
+  }
+
+  setForm((prev: any) => ({ ...prev, rating_value: value }));
+};
+const LEADTIME_BASE_OPTIONS = [
+  "Never-Out-of-Stock",
+  "Made-to-Order (Program)",
+  "Limited",
+  "Pre Order",
+];
+
+// build dynamic list = base + all existing leadtimes in products
+const leadtimeOptions = useMemo(() => {
+  const fromProducts: string[] = (Array.isArray(products) ? products : [])
+    .flatMap((p: any) => {
+      if (!p) return [];
+      if (Array.isArray(p.leadtime)) return p.leadtime;
+      if (p.leadtime) return [p.leadtime];
+      return [];
+    })
+    .filter(Boolean)
+    .map((v) => String(v).trim())
+    .filter((v) => v.length > 0);
+
+  // merge + dedupe
+  return Array.from(new Set([...LEADTIME_BASE_OPTIONS, ...fromProducts]));
+}, [products]);
+
+
 
   /* ---------------- debug: form + images ---------------- */
   useEffect(() => {
     if (!open) return;
+
+    
     // lightweight log – helps verify what’s inside when dialog opens / images change
     // eslint-disable-next-line no-console
     console.group("ProductFormDialog debug");
@@ -745,19 +797,22 @@ export default function ProductFormDialog({
             </FormControl>
 
             <Box sx={{ gridColumn: "span 3" }}>
-              <Autocomplete
-                multiple
-                options={dropdowns.color || []}
-                getOptionLabel={(option: any) =>
-                  option.name || option._id || ""
-                }
-                value={colorsValue}
-                onChange={(_, newValue) =>
-                  setForm((prev: any) => ({
-                    ...prev,
-                    colors: newValue.map((item: any) => item._id),
-                  }))
-                }
+  <Autocomplete
+    multiple
+    options={dropdowns.color || []}
+    getOptionLabel={(option: any) => option.name || option._id || ""}
+
+    value={colorsValue}
+    onChange={(_, newValue) =>
+      setForm((prev: any) => ({
+        ...prev,
+        colors: newValue.map((item: any) => item._id),
+      }))
+    }
+     onOpen={() => {
+      refreshDropdown("color");
+    }}
+
                 renderInput={(params) => (
                   <TextField {...params} label="Colors" />
                 )}
@@ -929,42 +984,49 @@ export default function ProductFormDialog({
           )}
         </Box>
 
-        {/* Lead Time - 6 columns */}
-        <Box sx={{ mb: 3, p: 3, bgcolor: "white", borderRadius: 2 }}>
-          <Typography
-            variant="h6"
-            sx={{ mb: 2, fontWeight: 600, color: "#2c3e50" }}
-          >
-            ⏱️ Lead Time
-          </Typography>
-          <Autocomplete
-            multiple
-            freeSolo
-            options={[]}
-            value={leadtimeValue}
-            onChange={(_, newValue) =>
-              setForm((prev: any) => ({ ...prev, leadtime: newValue }))
-            }
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Lead Time (days)"
-                placeholder="Type and press Enter"
-              />
-            )}
-            renderTags={(value, getTagProps) =>
-              value.map((option: string, index: number) => (
-                <Chip
-                  {...getTagProps({ index })}
-                  key={index}
-                  label={option}
-                  size="small"
-                />
-              ))
-            }
-            disabled={pageAccess === "only view"}
-          />
-        </Box>
+      {/* Lead Time - 6 columns */}
+  <Typography
+    variant="h6"
+    sx={{ mb: 2, fontWeight: 600, color: "#2c3e50" }}
+  >
+    ⏱️ Lead Time / Program Type
+  </Typography>
+
+<FormControl fullWidth>
+  <InputLabel id="leadtime-label">Lead Time / Program Type</InputLabel>
+  <Select
+    labelId="leadtime-label"
+    multiple
+    label="Lead Time / Program Type"
+    value={leadtimeValue}
+    onChange={(e) => {
+      const value = e.target.value;
+      const arr =
+        typeof value === "string" ? value.split(",") : (value as string[]);
+      setForm((prev: any) => ({
+        ...prev,
+        leadtime: arr,
+      }));
+    }}
+    renderValue={(selected) => (
+      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+        {(selected as string[]).map((val) => (
+          <Chip key={val} label={val} size="small" />
+        ))}
+      </Box>
+    )}
+    disabled={pageAccess === "only view"}
+  >
+    {leadtimeOptions.map((option) => (
+      <MenuItem key={option} value={option}>
+        <Checkbox checked={leadtimeValue.includes(option)} size="small" />
+        <ListItemText primary={option} />
+      </MenuItem>
+    ))}
+  </Select>
+</FormControl>
+
+
 
         {/* Specifications - 6 columns */}
         <Box sx={{ mb: 3, p: 3, bgcolor: "white", borderRadius: 2 }}>
@@ -1167,18 +1229,14 @@ export default function ProductFormDialog({
               />
             </Box>
             <TextField
-              label="Rating (0-5)"
-              type="number"
-              value={form.rating_value || ""}
-              onChange={(e) =>
-                setForm((prev: any) => ({
-                  ...prev,
-                  rating_value: e.target.value,
-                }))
-              }
-              inputProps={{ min: 0, max: 5, step: 0.1 }}
-              disabled={pageAccess === "only view"}
-            />
+  label="Rating (0-5)"
+  type="number"
+  value={form.rating_value ?? ""}
+  onChange={handleRatingChange}
+  inputProps={{ min: 0, max: 5, step: 0.01 }}
+  disabled={pageAccess === "only view"}
+/>
+
             <TextField
               label="Rating Count"
               type="number"

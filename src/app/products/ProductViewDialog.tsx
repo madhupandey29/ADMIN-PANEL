@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef,useMemo } from "react";
 import {
   Dialog,
   AppBar,
@@ -16,6 +16,8 @@ import {
   Select,
   MenuItem,
   Autocomplete,
+   Checkbox,       // ⬅️ add
+  ListItemText,   // ⬅️ add
 } from "@mui/material";
 import ClearIcon from "@mui/icons-material/Clear";
 import EditIcon from "@mui/icons-material/Edit";
@@ -57,6 +59,25 @@ export default function ProductViewDialog({
     image3?: string;
     video?: string;
   }>({});
+
+ const LEADTIME_BASE_OPTIONS = [
+  "Never-Out-of-Stock",
+  "Made-to-Order (Program)",
+  "Limited",
+  "Pre Order",
+];
+
+const leadtimeOptions = useMemo(() => {
+  const fromProducts: string[] = product
+    ? (Array.isArray(product.leadtime) ? product.leadtime : product.leadtime ? [product.leadtime] : [])
+        .filter(Boolean)
+        .map((v: any) => String(v).trim())
+        .filter((v) => v.length > 0)
+    : [];
+
+  return Array.from(new Set([...LEADTIME_BASE_OPTIONS, ...fromProducts]));
+}, [product]);
+
 
   // refs for hidden file inputs
   const image1InputRef = useRef<HTMLInputElement | null>(null);
@@ -765,27 +786,67 @@ export default function ProductViewDialog({
                 </Box>
               )}
             </Box>
-            <Box sx={{ gridColumn: "span 4" }}>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                fontWeight={600}
-                display="block"
-                mb={0.5}
-              >
-                Lead Time (days)
-              </Typography>
-              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-                {Array.isArray(currentData.leadtime) &&
-                currentData.leadtime.length > 0 ? (
-                  currentData.leadtime.map((time: string, i: number) => (
-                    <Chip key={i} label={time} size="small" />
-                  ))
-                ) : (
-                  <Typography variant="body2">-</Typography>
-                )}
-              </Box>
-            </Box>
+          <Box sx={{ gridColumn: "span 4" }}>
+  <Typography
+    variant="caption"
+    color="text.secondary"
+    fontWeight={600}
+    display="block"
+    mb={0.5}
+  >
+    Lead Time / Program Type
+  </Typography>
+
+  {isEditMode ? (
+  <FormControl fullWidth size="small">
+    <Select
+      multiple
+      value={Array.isArray(editData.leadtime) ? editData.leadtime : []}
+      onChange={(e) => {
+        const value = e.target.value;
+        const arr =
+          typeof value === "string" ? value.split(",") : (value as string[]);
+        setEditData((prev: any) => ({
+          ...prev,
+          leadtime: arr,
+        }));
+      }}
+      renderValue={(selected) => (
+        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+          {(selected as string[]).map((val) => (
+            <Chip key={val} label={val} size="small" />
+          ))}
+        </Box>
+      )}
+    >
+      {leadtimeOptions.map((option) => (
+        <MenuItem key={option} value={option}>
+          <Checkbox
+            checked={
+              Array.isArray(editData.leadtime) &&
+              editData.leadtime.includes(option)
+            }
+            size="small"
+          />
+          <ListItemText primary={option} />
+        </MenuItem>
+      ))}
+    </Select>
+  </FormControl>
+) : (
+    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+      {Array.isArray(currentData.leadtime) &&
+      currentData.leadtime.length > 0 ? (
+        currentData.leadtime.map((time: string, i: number) => (
+          <Chip key={i} label={time} size="small" />
+        ))
+      ) : (
+        <Typography variant="body2">-</Typography>
+      )}
+    </Box>
+  )}
+</Box>
+
           </Box>
         </Box>
 
