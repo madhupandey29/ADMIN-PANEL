@@ -268,7 +268,7 @@ export default function ProductPage() {
   // Define columns for EnhancedDataTable
   const columns: Column<Product>[] = useMemo(() => [
     {
-      id: 'image3',
+      id: 'image1',
       label: 'Image',
       type: 'image',
       minWidth: 60,
