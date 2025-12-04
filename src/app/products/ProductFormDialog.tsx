@@ -79,6 +79,7 @@ interface ProductFormDialogProps {
     field: "gender" | "clothType" | "number",
     value: string
   ) => void;
+  productTagOptionsList: string[];
 }
 
 export default function ProductFormDialog({
@@ -122,6 +123,7 @@ export default function ProductFormDialog({
   handleAddSubsuitable,
   handleRemoveSubsuitable,
   handleUpdateSubsuitableItem,
+  productTagOptionsList,
 }: ProductFormDialogProps) {
   /* ------------- shared dropdown metadata ------------- */
   const dropdownFields = [
@@ -235,6 +237,30 @@ const FULL_DESC_MAX = 2000;
     return Array.from(new Set([...LEADTIME_BASE_OPTIONS, ...fromProducts]));
   }, [products]);
 
+  // Merge leadtime options with current form values
+  const mergedLeadtimeOptions = useMemo(() => {
+    const set = new Set<string>();
+    
+    // from base options and products
+    leadtimeOptions.forEach((option) => {
+      const val = String(option || "").trim();
+      if (val) set.add(val);
+    });
+    
+    // from current form value
+    if (Array.isArray(form.leadtime)) {
+      form.leadtime.forEach((t: any) => {
+        const val = String(t || "").trim();
+        if (val) set.add(val);
+      });
+    } else if (form.leadtime) {
+      const val = String(form.leadtime).trim();
+      if (val) set.add(val);
+    }
+    
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [leadtimeOptions, form.leadtime]);
+
   // Dynamic OG Type list from existing products + current form value
 const ogTypeOptions = useMemo(() => {
   const set = new Set<string>();
@@ -253,26 +279,14 @@ const ogTypeOptions = useMemo(() => {
   return Array.from(set).sort((a, b) => a.localeCompare(b));
 }, [products, form?.ogType]);
 
-// Dynamic Product Tag list from existing products + current form
-const productTagOptions = useMemo(() => {
+// Use passed productTagOptions and merge with current form values
+const mergedProductTagOptions = useMemo(() => {
   const set = new Set<string>();
 
-  // from all saved products
-  (Array.isArray(products) ? products : []).forEach((p: any) => {
-    if (!p) return;
-
-    const tags = p.productTag;
-    if (!tags) return;
-
-    if (Array.isArray(tags)) {
-      tags.forEach((t: any) => {
-        const val = String(t || "").trim();
-        if (val) set.add(val);
-      });
-    } else {
-      const val = String(tags).trim();
-      if (val) set.add(val);
-    }
+  // from passed options
+  (productTagOptionsList || []).forEach((t: string) => {
+    const val = String(t || "").trim();
+    if (val) set.add(val);
   });
 
   // from current form value
@@ -287,7 +301,7 @@ const productTagOptions = useMemo(() => {
   }
 
   return Array.from(set).sort((a, b) => a.localeCompare(b));
-}, [products, form.productTag]);
+}, [productTagOptionsList, form.productTag]);
 
   /* ------------- debug images ------------- */
 
@@ -1163,46 +1177,49 @@ const productTagOptions = useMemo(() => {
           ⏱️ Lead Time / Program Type
         </Typography>
 
-        <FormControl fullWidth>
-          <InputLabel id="leadtime-label">
-            Lead Time / Program Type
-          </InputLabel>
-          <Select
-            labelId="leadtime-label"
-            multiple
-            label="Lead Time / Program Type"
-            value={leadtimeValue}
-            onChange={(e) => {
-              const value = e.target.value;
-              const arr =
-                typeof value === "string"
-                  ? value.split(",")
-                  : (value as string[]);
+        <Autocomplete
+          multiple
+          freeSolo
+          options={mergedLeadtimeOptions}
+          value={leadtimeValue}
+          onChange={(_, newValue) => {
+            setForm((prev: any) => ({
+              ...prev,
+              leadtime: newValue as string[],
+            }));
+          }}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="Lead Time / Program Type"
+              placeholder="Add lead time options..."
+              helperText="Press Enter to add multiple options"
+            />
+          )}
+          renderTags={(value, getTagProps) =>
+            value.map((option, index) => (
+              <Chip
+                {...getTagProps({ index })}
+                key={index}
+                label={option}
+                size="small"
+                sx={{ m: 0.5 }}
+              />
+            ))
+          }
+          disabled={pageAccess === "only view"}
+          onBlur={(event) => {
+            // Handle adding custom values that aren't in the options
+            const target = event.target as HTMLInputElement;
+            const inputValue = target.value;
+            if (inputValue && !leadtimeValue.includes(inputValue)) {
               setForm((prev: any) => ({
                 ...prev,
-                leadtime: arr,
+                leadtime: [...(prev.leadtime || []), inputValue],
               }));
-            }}
-            renderValue={(selected) => (
-              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-                {(selected as string[]).map((val) => (
-                  <Chip key={val} label={val} size="small" />
-                ))}
-              </Box>
-            )}
-            disabled={pageAccess === "only view"}
-          >
-            {leadtimeOptions.map((option) => (
-              <MenuItem key={option} value={option}>
-                <Checkbox
-                  checked={leadtimeValue.includes(option)}
-                  size="small"
-                />
-                <ListItemText primary={option} />
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+            }
+          }}
+        />
 
         {/* Specifications */}
         <Box sx={{ mb: 3, p: 3, bgcolor: "white", borderRadius: 2 }}>
@@ -1379,7 +1396,7 @@ const productTagOptions = useMemo(() => {
   <Autocomplete
     multiple
     freeSolo
-    options={productTagOptions}
+    options={mergedProductTagOptions}
     value={productTagValue}
     onChange={(_, newValue) => {
       setForm((prev: any) => ({
@@ -1407,6 +1424,17 @@ const productTagOptions = useMemo(() => {
       ))
     }
     disabled={pageAccess === "only view"}
+    onBlur={(event) => {
+      // Handle adding custom values that aren't in the options
+      const target = event.target as HTMLInputElement;
+      const inputValue = target.value;
+      if (inputValue && !productTagValue.includes(inputValue)) {
+        setForm((prev: any) => ({
+          ...prev,
+          productTag: [...(prev.productTag || []), inputValue],
+        }));
+      }
+    }}
   />
 </Box>
 
@@ -1422,13 +1450,17 @@ const productTagOptions = useMemo(() => {
               label="Rating Count"
               type="number"
               value={form.rating_count || ""}
-              onChange={(e) =>
-                setForm((prev: any) => ({
-                  ...prev,
-                  rating_count: e.target.value,
-                }))
-              }
-              inputProps={{ min: 0 }}
+              onChange={(e) => {
+                const value = e.target.value;
+                // Allow empty value or valid numbers >= 1
+                if (value === "" || (Number(value) >= 1 && !isNaN(Number(value)))) {
+                  setForm((prev: any) => ({
+                    ...prev,
+                    rating_count: value,
+                  }));
+                }
+              }}
+              inputProps={{ min: 1, step: 1 }}
               disabled={pageAccess === "only view"}
             />
           </Box>

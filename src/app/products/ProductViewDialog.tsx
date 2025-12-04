@@ -35,6 +35,7 @@ interface ProductViewDialogProps {
   getImageUrl: (img: string | undefined) => string | undefined;
   pageAccess: string;
   dropdowns: any;
+     productTagOptions: string[];
 }
 
 type ImageField = "image1" | "image2" | "image3";
@@ -47,36 +48,91 @@ export default function ProductViewDialog({
   getImageUrl,
   pageAccess,
   dropdowns,
+     productTagOptions,         // ✅ add this
 }: ProductViewDialogProps) {
   const [isEditMode, setIsEditMode] = useState(false);
   const [editData, setEditData] = useState<any>({});
   const [saving, setSaving] = useState(false);
 
   // local previews for existing or newly selected files
-  const [mediaPreview, setMediaPreview] = useState<{
+   const [mediaPreview, setMediaPreview] = useState<{
     image1?: string;
     image2?: string;
     image3?: string;
     video?: string;
   }>({});
+    // 🔹 Merge global productTagOptions with current editData tags
+  const mergedProductTagOptions = useMemo(() => {
+    const set = new Set<string>();
 
- const LEADTIME_BASE_OPTIONS = [
-  "Never-Out-of-Stock",
-  "Made-to-Order (Program)",
-  "Limited",
-  "Pre Order",
-];
+    (productTagOptions || []).forEach((t) => {
+      const val = String(t ?? "").trim();
+      if (val) set.add(val);
+    });
 
-const leadtimeOptions = useMemo(() => {
-  const fromProducts: string[] = product
-    ? (Array.isArray(product.leadtime) ? product.leadtime : product.leadtime ? [product.leadtime] : [])
-        .filter(Boolean)
-        .map((v: any) => String(v).trim())
-        .filter((v) => v.length > 0)
-    : [];
+    if (editData && Array.isArray(editData.productTag)) {
+      (editData.productTag as any[]).forEach((t) => {
+        const val = String(t ?? "").trim();
+        if (val) set.add(val);
+      });
+    }
 
-  return Array.from(new Set([...LEADTIME_BASE_OPTIONS, ...fromProducts]));
-}, [product]);
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [productTagOptions, editData?.productTag]);
+
+
+  // 🔹 Static base leadtime labels
+  const LEADTIME_BASE_OPTIONS = [
+    "Never-Out-of-Stock",
+    "Made-to-Order (Program)",
+    "Limited",
+    "Pre Order",
+  ];
+
+  // 🔹 Product Tag options – collected from all products + current editData
+ 
+
+  // 🔹 Leadtime options – base + whatever exists on this product
+  const leadtimeOptions = useMemo(() => {
+    const fromProducts: string[] = product
+      ? (Array.isArray(product.leadtime)
+          ? product.leadtime
+          : product.leadtime
+          ? [product.leadtime]
+          : []
+        )
+          .filter(Boolean)
+          .map((v: any) => String(v).trim())
+          .filter((v: string) => v.length > 0)
+      : [];
+
+    return Array.from(new Set([...LEADTIME_BASE_OPTIONS, ...fromProducts]));
+  }, [product]);
+
+  // Merge leadtime options with current editData values
+  const mergedLeadtimeOptions = useMemo(() => {
+    const set = new Set<string>();
+    
+    // from base options and products
+    leadtimeOptions.forEach((option) => {
+      const val = String(option || "").trim();
+      if (val) set.add(val);
+    });
+    
+    // from current editData value
+    if (Array.isArray(editData.leadtime)) {
+      editData.leadtime.forEach((t: any) => {
+        const val = String(t || "").trim();
+        if (val) set.add(val);
+      });
+    } else if (editData.leadtime) {
+      const val = String(editData.leadtime).trim();
+      if (val) set.add(val);
+    }
+    
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [leadtimeOptions, editData?.leadtime]);
+
 
 
   // refs for hidden file inputs
@@ -798,42 +854,49 @@ const leadtimeOptions = useMemo(() => {
   </Typography>
 
   {isEditMode ? (
-  <FormControl fullWidth size="small">
-    <Select
+    <Autocomplete
       multiple
+      freeSolo
+      options={mergedLeadtimeOptions}
       value={Array.isArray(editData.leadtime) ? editData.leadtime : []}
-      onChange={(e) => {
-        const value = e.target.value;
-        const arr =
-          typeof value === "string" ? value.split(",") : (value as string[]);
+      onChange={(_, newValue) => {
         setEditData((prev: any) => ({
           ...prev,
-          leadtime: arr,
+          leadtime: newValue as string[],
         }));
       }}
-      renderValue={(selected) => (
-        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-          {(selected as string[]).map((val) => (
-            <Chip key={val} label={val} size="small" />
-          ))}
-        </Box>
+      renderInput={(params) => (
+        <TextField
+          {...params}
+          label="Lead Time / Program Type"
+          placeholder="Add lead time options..."
+          size="small"
+        />
       )}
-    >
-      {leadtimeOptions.map((option) => (
-        <MenuItem key={option} value={option}>
-          <Checkbox
-            checked={
-              Array.isArray(editData.leadtime) &&
-              editData.leadtime.includes(option)
-            }
+      renderTags={(value, getTagProps) =>
+        value.map((option, index) => (
+          <Chip
+            {...getTagProps({ index })}
+            key={index}
+            label={option}
             size="small"
+            sx={{ m: 0.5 }}
           />
-          <ListItemText primary={option} />
-        </MenuItem>
-      ))}
-    </Select>
-  </FormControl>
-) : (
+        ))
+      }
+      onBlur={(event) => {
+        // Handle adding custom values that aren't in the options
+        const target = event.target as HTMLInputElement;
+        const inputValue = target.value;
+        if (inputValue && !(Array.isArray(editData.leadtime) && editData.leadtime.includes(inputValue))) {
+          setEditData((prev: any) => ({
+            ...prev,
+            leadtime: [...(prev.leadtime || []), inputValue],
+          }));
+        }
+      }}
+    />
+  ) : (
     <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
       {Array.isArray(currentData.leadtime) &&
       currentData.leadtime.length > 0 ? (
@@ -1234,75 +1297,73 @@ const leadtimeOptions = useMemo(() => {
               alignItems: "start",
             }}
           >
-            <Box sx={{ gridColumn: "span 4" }}>
-              {isEditMode ? (
-                <Autocomplete
-                  multiple
-                  freeSolo
-                  options={[]}
-                  value={editData.productTag || []}
-                  onChange={(_, newValue) =>
-                    setEditData({
-                      ...editData,
-                      productTag: newValue as string[],
-                    })
-                  }
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Product Tags"
-                      placeholder="Add product tags..."
-                      size="small"
-                    />
-                  )}
-                  renderTags={(value, getTagProps) =>
-                    value.map((option, index) => (
-                      <Chip
-                        {...getTagProps({ index })}
-                        key={index}
-                        label={option}
-                        size="small"
-                        sx={{ m: 0.5 }}
-                      />
-                    ))
-                  }
-                />
-              ) : (
-                <Box>
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    fontWeight={600}
-                  >
-                    Product Tags
-                  </Typography>
-                  <Box
-                    sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mt: 0.5 }}
-                  >
-                    {currentData.productTag &&
-                    Array.isArray(currentData.productTag) &&
-                    currentData.productTag.length > 0 ? (
-                      currentData.productTag.map(
-                        (tag: string, index: number) => (
-                          <Chip
-                            key={index}
-                            label={tag}
-                            size="small"
-                            sx={{
-                              bgcolor: "#f3e5f5",
-                              color: "#7b1fa2",
-                              fontWeight: 500,
-                            }}
-                          />
-                        )
-                      )
-                    ) : (
-                      <Typography variant="body2">-</Typography>
-                    )}
-                  </Box>
-                </Box>
-              )}
-            </Box>
+<Box sx={{ gridColumn: "span 4" }}>
+  {isEditMode ? (
+    <Autocomplete
+      multiple
+      freeSolo
+      options={mergedProductTagOptions}   // ✅ dynamic list
+      value={editData.productTag || []}
+      onChange={(_, newValue) =>
+        setEditData({
+          ...editData,
+          productTag: newValue as string[],
+        })
+      }
+      renderInput={(params) => (
+        <TextField
+          {...params}
+          label="Product Tags"
+          placeholder="Add product tags..."
+          size="small"
+        />
+      )}
+      renderTags={(value, getTagProps) =>
+        value.map((option, index) => (
+          <Chip
+            {...getTagProps({ index })}
+            key={index}
+            label={option}
+            size="small"
+            sx={{ m: 0.5 }}
+          />
+        ))
+      }
+    />
+  ) : (
+    <Box>
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        fontWeight={600}
+      >
+        Product Tags
+      </Typography>
+      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mt: 0.5 }}>
+        {currentData.productTag &&
+        Array.isArray(currentData.productTag) &&
+        currentData.productTag.length > 0 ? (
+          currentData.productTag.map((tag: string, index: number) => (
+            <Chip
+              key={index}
+              label={tag}
+              size="small"
+              sx={{
+                bgcolor: "#f3e5f5",
+                color: "#7b1fa2",
+                fontWeight: 500,
+              }}
+            />
+          ))
+        ) : (
+          <Typography variant="body2">-</Typography>
+        )}
+      </Box>
+    </Box>
+  )}
+</Box>
+
+
             {[
               { field: "rating_value", label: "Rating Value" },
               { field: "rating_count", label: "Rating Count" },
@@ -1313,11 +1374,16 @@ const leadtimeOptions = useMemo(() => {
                     label={label}
                     type="number"
                     value={editData[field] || ""}
-                    onChange={(e) =>
-                      setEditData({ ...editData, [field]: e.target.value })
-                    }
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      // For rating_count, only allow values >= 1
+                      if (field !== "rating_count" || value === "" || (Number(value) >= 1 && !isNaN(Number(value)))) {
+                        setEditData({ ...editData, [field]: value });
+                      }
+                    }}
                     fullWidth
                     size="small"
+                    {...(field === "rating_count" && { inputProps: { min: 1, step: 1 } })}
                   />
                 ) : (
                   <Box>

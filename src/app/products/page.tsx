@@ -375,6 +375,27 @@ export default function ProductPage() {
     },
 
   ], []);
+// 🔹 All unique product tags from all products
+const productTagOptions = useMemo(() => {
+  const set = new Set<string>();
+
+  (products || []).forEach((p) => {
+    const tags = (p as any)?.productTag;
+    if (!tags) return;
+
+    if (Array.isArray(tags)) {
+      tags.forEach((t) => {
+        const val = String(t ?? "").trim();
+        if (val) set.add(val);
+      });
+    } else {
+      const val = String(tags ?? "").trim();
+      if (val) set.add(val);
+    }
+  });
+
+  return Array.from(set).sort((a, b) => a.localeCompare(b));
+}, [products]);
 
   // Statistics
   const stats = useMemo(() => {
@@ -1358,6 +1379,7 @@ export default function ProductPage() {
         handleAddSubsuitable={handleAddSubsuitable}
         handleRemoveSubsuitable={handleRemoveSubsuitable}
         handleUpdateSubsuitableItem={handleUpdateSubsuitableItem}
+          productTagOptionsList={productTagOptions}
       />
 
       {/* View Product Dialog with Inline Editing */}
@@ -1369,6 +1391,7 @@ export default function ProductPage() {
         getImageUrl={getImageUrl}
         pageAccess={pageAccess}
         dropdowns={dropdowns}
+           productTagOptions={productTagOptions}
       />
 
       {/* Old dialog removed - using new ProductFormDialog and ProductViewDialog components above */}
