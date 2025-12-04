@@ -19,7 +19,7 @@ import {
   InputAdornment,
   Checkbox,
   CircularProgress,
-   ListItemText  
+  ListItemText,
 } from "@mui/material";
 import ClearIcon from "@mui/icons-material/Clear";
 import ImageIcon from "@mui/icons-material/Image";
@@ -123,103 +123,120 @@ export default function ProductFormDialog({
   handleRemoveSubsuitable,
   handleUpdateSubsuitableItem,
 }: ProductFormDialogProps) {
+  /* ------------- shared dropdown metadata ------------- */
   const dropdownFields = [
     { key: "category", label: "Category" },
     { key: "substructure", label: "Substructure" },
     { key: "content", label: "Content" },
     { key: "design", label: "Design" },
     { key: "subfinish", label: "Subfinish" },
-    // subsuitable is now handled separately as a custom component
     { key: "vendor", label: "Vendor" },
     { key: "groupcode", label: "Groupcode" },
   ];
-  const GENDER_OPTIONS = ["Men", "Women", "Kids", "Unisex"];
 
-// Build dynamic cloth-type list from all existing products + current editable items
-const clothTypeOptions = useMemo(() => {
-  const set = new Set<string>();
+  /* ------------- dynamic Gender / ClothType options ------------- */
 
-  // from all saved products
-  (Array.isArray(products) ? products : []).forEach((p: any) => {
-    if (!p || !Array.isArray(p.subsuitable)) return;
+  const GENDER_BASE_OPTIONS = ["Men", "Women", "Kids", "Unisex"];
 
-    p.subsuitable.forEach((item: any) => {
-      // support both old string format ("Men-Shirt-42") and new object format
-      let ct = "";
-      if (typeof item === "string") {
-        const parts = item.split("-").map((s) => s.trim());
-        ct = parts[1] || ""; // 2nd part = cloth type
-      } else if (item && typeof item === "object") {
-        ct = String(item.clothType || "").trim();
-      }
-      if (ct) set.add(ct);
+  // Gender list = base + all products + current editable items
+  const genderOptions = useMemo(() => {
+    const set = new Set<string>(GENDER_BASE_OPTIONS);
+
+    (Array.isArray(products) ? products : []).forEach((p: any) => {
+      if (!p || !Array.isArray(p.subsuitable)) return;
+
+      p.subsuitable.forEach((item: any) => {
+        let g = "";
+        if (typeof item === "string") {
+          // old "Men-Shirt-42" format
+          const parts = item.split("-").map((s) => s.trim());
+          g = parts[0] || "";
+        } else if (item && typeof item === "object") {
+          g = String(item.gender || "").trim();
+        }
+        if (g) set.add(g);
+      });
     });
-  });
 
-  // from current editable items (in this form)
-  editableSubsuitableItems.forEach((item) => {
-    if (item.clothType) set.add(item.clothType.trim());
-  });
+    editableSubsuitableItems.forEach((item) => {
+      if (item.gender) set.add(item.gender.trim());
+    });
 
-  return Array.from(set).sort((a, b) => a.localeCompare(b));
-}, [products, editableSubsuitableItems]);
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [products, editableSubsuitableItems]);
 
-const handleRatingChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  const value = e.target.value;
+  // Cloth type list = from products + current editable items
+  const clothTypeOptions = useMemo(() => {
+    const set = new Set<string>();
 
-  // allow empty (so user can clear the field)
-  if (value === "") {
-    setForm((prev: any) => ({ ...prev, rating_value: "" }));
-    return;
-  }
+    (Array.isArray(products) ? products : []).forEach((p: any) => {
+      if (!p || !Array.isArray(p.subsuitable)) return;
 
-  // allow only numbers with max 2 decimals: e.g. 0, 4, 4.3, 4.34
-  const regex = /^([0-9])(\.[0-9]{0,2})?$/;
-  if (!regex.test(value)) {
-    // ignore invalid typing (like 4.345 or letters)
-    return;
-  }
+      p.subsuitable.forEach((item: any) => {
+        let ct = "";
+        if (typeof item === "string") {
+          const parts = item.split("-").map((s) => s.trim());
+          ct = parts[1] || "";
+        } else if (item && typeof item === "object") {
+          ct = String(item.clothType || "").trim();
+        }
+        if (ct) set.add(ct);
+      });
+    });
 
-  const num = parseFloat(value);
-  // block negatives, more than 5, or NaN
-  if (Number.isNaN(num) || num < 0 || num > 5) {
-    return;
-  }
+    editableSubsuitableItems.forEach((item) => {
+      if (item.clothType) set.add(item.clothType.trim());
+    });
 
-  setForm((prev: any) => ({ ...prev, rating_value: value }));
-};
-const LEADTIME_BASE_OPTIONS = [
-  "Never-Out-of-Stock",
-  "Made-to-Order (Program)",
-  "Limited",
-  "Pre Order",
-];
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [products, editableSubsuitableItems]);
 
-// build dynamic list = base + all existing leadtimes in products
-const leadtimeOptions = useMemo(() => {
-  const fromProducts: string[] = (Array.isArray(products) ? products : [])
-    .flatMap((p: any) => {
-      if (!p) return [];
-      if (Array.isArray(p.leadtime)) return p.leadtime;
-      if (p.leadtime) return [p.leadtime];
-      return [];
-    })
-    .filter(Boolean)
-    .map((v) => String(v).trim())
-    .filter((v) => v.length > 0);
+  /* ------------- ratings / leadtime helpers ------------- */
 
-  // merge + dedupe
-  return Array.from(new Set([...LEADTIME_BASE_OPTIONS, ...fromProducts]));
-}, [products]);
+  const handleRatingChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
 
+    if (value === "") {
+      setForm((prev: any) => ({ ...prev, rating_value: "" }));
+      return;
+    }
 
+    const regex = /^([0-9])(\.[0-9]{0,2})?$/;
+    if (!regex.test(value)) return;
 
-  /* ---------------- debug: form + images ---------------- */
+    const num = parseFloat(value);
+    if (Number.isNaN(num) || num < 0 || num > 5) return;
+
+    setForm((prev: any) => ({ ...prev, rating_value: value }));
+  };
+
+  const LEADTIME_BASE_OPTIONS = [
+    "Never-Out-of-Stock",
+    "Made-to-Order (Program)",
+    "Limited",
+    "Pre Order",
+  ];
+
+  const leadtimeOptions = useMemo(() => {
+    const fromProducts: string[] = (Array.isArray(products) ? products : [])
+      .flatMap((p: any) => {
+        if (!p) return [];
+        if (Array.isArray(p.leadtime)) return p.leadtime;
+        if (p.leadtime) return [p.leadtime];
+        return [];
+      })
+      .filter(Boolean)
+      .map((v) => String(v).trim())
+      .filter((v) => v.length > 0);
+
+    return Array.from(new Set([...LEADTIME_BASE_OPTIONS, ...fromProducts]));
+  }, [products]);
+
+  /* ------------- debug images ------------- */
+
   useEffect(() => {
     if (!open) return;
 
-    
-    // lightweight log – helps verify what’s inside when dialog opens / images change
     // eslint-disable-next-line no-console
     console.group("ProductFormDialog debug");
     console.log("editId:", editId);
@@ -249,7 +266,8 @@ const leadtimeOptions = useMemo(() => {
     videoPreview,
   ]);
 
-  /* ---------------- Quick Copy options (safe) ---------------- */
+  /* ------------- quick copy options ------------- */
+
   const quickCopyOptions = useMemo(() => {
     try {
       const raw = Array.isArray(products) ? products : [];
@@ -260,7 +278,7 @@ const leadtimeOptions = useMemo(() => {
       );
 
       const mapped = sorted
-        .filter((p) => p && p._id && p.name) // just in case
+        .filter((p) => p && p._id && p.name)
         .map((p) => ({
           label: String(p.name),
           value: String(p._id),
@@ -276,7 +294,8 @@ const leadtimeOptions = useMemo(() => {
     }
   }, [products]);
 
-  // Make sure these are always arrays where MUI expects arrays
+  /* ------------- controlled values ------------- */
+
   const leadtimeValue: string[] = Array.isArray(form.leadtime)
     ? form.leadtime
     : form.leadtime
@@ -297,6 +316,8 @@ const leadtimeOptions = useMemo(() => {
           )
           .filter(Boolean)
       : [];
+
+  /* ------------- render ------------- */
 
   return (
     <Dialog fullScreen open={open} onClose={onClose}>
@@ -369,12 +390,9 @@ const leadtimeOptions = useMemo(() => {
               gap: 3,
             }}
           >
-            {/* Image 1 (schema: image1) */}
+            {/* Image 1 */}
             <Box>
-              <Typography
-                variant="subtitle2"
-                sx={{ mb: 1, fontWeight: 600 }}
-              >
+              <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
                 Image 1 *
               </Typography>
               <input
@@ -434,12 +452,9 @@ const leadtimeOptions = useMemo(() => {
               )}
             </Box>
 
-            {/* Image 2 (schema: image2) */}
+            {/* Image 2 */}
             <Box>
-              <Typography
-                variant="subtitle2"
-                sx={{ mb: 1, fontWeight: 600 }}
-              >
+              <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
                 Image 2
               </Typography>
               <input
@@ -499,12 +514,9 @@ const leadtimeOptions = useMemo(() => {
               )}
             </Box>
 
-            {/* Image 3 (schema: image3) */}
+            {/* Image 3 */}
             <Box>
-              <Typography
-                variant="subtitle2"
-                sx={{ mb: 1, fontWeight: 600 }}
-              >
+              <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
                 Image 3
               </Typography>
               <input
@@ -566,10 +578,7 @@ const leadtimeOptions = useMemo(() => {
 
             {/* Video */}
             <Box>
-              <Typography
-                variant="subtitle2"
-                sx={{ mb: 1, fontWeight: 600 }}
-              >
+              <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
                 Video
               </Typography>
               <input
@@ -716,7 +725,7 @@ const leadtimeOptions = useMemo(() => {
           </Box>
         </Box>
 
-        {/* Basic Info - 6 columns */}
+        {/* Basic Info */}
         <Box sx={{ mb: 3, p: 3, bgcolor: "white", borderRadius: 2 }}>
           <Typography
             variant="h6"
@@ -754,7 +763,7 @@ const leadtimeOptions = useMemo(() => {
           </Box>
         </Box>
 
-        {/* Categorization - 6 columns */}
+        {/* Categorization */}
         <Box sx={{ mb: 3, p: 3, bgcolor: "white", borderRadius: 2 }}>
           <Typography
             variant="h6"
@@ -827,22 +836,20 @@ const leadtimeOptions = useMemo(() => {
             </FormControl>
 
             <Box sx={{ gridColumn: "span 3" }}>
-  <Autocomplete
-    multiple
-    options={dropdowns.color || []}
-    getOptionLabel={(option: any) => option.name || option._id || ""}
-
-    value={colorsValue}
-    onChange={(_, newValue) =>
-      setForm((prev: any) => ({
-        ...prev,
-        colors: newValue.map((item: any) => item._id),
-      }))
-    }
-     onOpen={() => {
-      refreshDropdown("color");
-    }}
-
+              <Autocomplete
+                multiple
+                options={dropdowns.color || []}
+                getOptionLabel={(option: any) => option.name || option._id || ""}
+                value={colorsValue}
+                onChange={(_, newValue) =>
+                  setForm((prev: any) => ({
+                    ...prev,
+                    colors: newValue.map((item: any) => item._id),
+                  }))
+                }
+                onOpen={() => {
+                  refreshDropdown("color");
+                }}
                 renderInput={(params) => (
                   <TextField {...params} label="Colors" />
                 )}
@@ -862,275 +869,285 @@ const leadtimeOptions = useMemo(() => {
           </Box>
         </Box>
 
-        {/* Subsuitable Builder - 6 columns */}
-       {/* Subsuitable Builder - 6 columns */}
-<Box sx={{ mb: 3, p: 3, bgcolor: "white", borderRadius: 2 }}>
-  <Typography
-    variant="h6"
-    sx={{ mb: 2, fontWeight: 600, color: "#2c3e50" }}
-  >
-    👔 Suitable For (Gender – Cloth Type – Number)
-  </Typography>
+        {/* Subsuitable Builder */}
+        <Box sx={{ mb: 3, p: 3, bgcolor: "white", borderRadius: 2 }}>
+          <Typography
+            variant="h6"
+            sx={{ mb: 2, fontWeight: 600, color: "#2c3e50" }}
+          >
+            👔 Suitable For (Gender – Cloth Type – Number)
+          </Typography>
 
-  {/* ➕ Add new row */}
-  <Box
-    sx={{
-      display: "grid",
-      gridTemplateColumns: "repeat(6, 1fr)",
-      gap: 2,
-      mb: 2,
-    }}
-  >
-    {/* Gender select */}
-    <Box sx={{ gridColumn: "span 2" }}>
-      <FormControl fullWidth size="small">
-        <InputLabel>Gender</InputLabel>
-        <Select
-          label="Gender"
-          value={subsuitableInput.gender}
-          onChange={(e) =>
-            setSubsuitableInput((prev) => ({
-              ...prev,
-              gender: e.target.value as string,
-            }))
-          }
-          disabled={pageAccess === "only view"}
-        >
-          {GENDER_OPTIONS.map((g) => (
-            <MenuItem key={g} value={g}>
-              {g}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-    </Box>
-
-    {/* Cloth Type select (dynamic from old products) */}
-    <Box sx={{ gridColumn: "span 2" }}>
-      <FormControl fullWidth size="small">
-        <InputLabel>Cloth Type</InputLabel>
-        <Select
-          label="Cloth Type"
-          value={subsuitableInput.clothType}
-          onChange={(e) =>
-            setSubsuitableInput((prev) => ({
-              ...prev,
-              clothType: e.target.value as string,
-            }))
-          }
-          disabled={pageAccess === "only view"}
-        >
-          {clothTypeOptions.length === 0 ? (
-            <MenuItem value="" disabled>
-              No cloth types found yet
-            </MenuItem>
-          ) : (
-            clothTypeOptions.map((ct) => (
-              <MenuItem key={ct} value={ct}>
-                {ct}
-              </MenuItem>
-            ))
-          )}
-        </Select>
-      </FormControl>
-    </Box>
-
-    {/* Number input 1–100 (no dropdown) */}
-    <TextField
-      fullWidth
-      size="small"
-      label="Number"
-      type="number"
-      value={subsuitableInput.number}
-      onChange={(e) => {
-        const raw = e.target.value;
-        if (raw === "") {
-          // allow clearing
-          setSubsuitableInput((prev) => ({ ...prev, number: "" }));
-          return;
-        }
-        let num = Number(raw);
-        if (Number.isNaN(num)) return;
-        if (num < 1) num = 1;
-        if (num > 100) num = 100;
-        setSubsuitableInput((prev) => ({
-          ...prev,
-          number: String(num),
-        }));
-      }}
-      inputProps={{ min: 1, max: 100 }}
-      placeholder="1–100"
-      disabled={pageAccess === "only view"}
-    />
-
-    <Button
-      variant="contained"
-      onClick={handleAddSubsuitable}
-      disabled={pageAccess === "only view"}
-      sx={{ height: 40, alignSelf: "center" }}
-    >
-      ADD
-    </Button>
-  </Box>
-
-  {/* 📝 Existing items (edit mode) */}
-  {editableSubsuitableItems.length > 0 && (
-    <Box sx={{ mt: 2 }}>
-      <Typography
-        variant="subtitle2"
-        sx={{ mb: 1, fontWeight: 600 }}
-      >
-        Added Items
-      </Typography>
-
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-        {editableSubsuitableItems.map((item, index) => (
+          {/* Add new item */}
           <Box
-            key={index}
             sx={{
               display: "grid",
               gridTemplateColumns: "repeat(6, 1fr)",
               gap: 2,
-              p: 1,
-              bgcolor: "#f5f5f5",
-              borderRadius: 1,
+              mb: 2,
             }}
           >
-            {/* Gender select */}
+            {/* Gender */}
             <Box sx={{ gridColumn: "span 2" }}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Gender</InputLabel>
-                <Select
-                  label="Gender"
-                  value={item.gender}
-                  onChange={(e) =>
-                    handleUpdateSubsuitableItem(
-                      index,
-                      "gender",
-                      e.target.value as string
-                    )
-                  }
-                  disabled={pageAccess === "only view"}
-                >
-                  {GENDER_OPTIONS.map((g) => (
-                    <MenuItem key={g} value={g}>
-                      {g}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+              <Autocomplete
+                freeSolo
+                options={genderOptions}
+                value={subsuitableInput.gender}
+                onChange={(_, newValue) =>
+                  setSubsuitableInput((prev) => ({
+                    ...prev,
+                    gender: (newValue as string) || "",
+                  }))
+                }
+                onInputChange={(_, newInputValue) =>
+                  setSubsuitableInput((prev) => ({
+                    ...prev,
+                    gender: newInputValue,
+                  }))
+                }
+                renderInput={(params) => (
+                  <TextField {...params} label="Gender" size="small" />
+                )}
+                disabled={pageAccess === "only view"}
+              />
             </Box>
 
-            {/* Cloth Type select */}
+            {/* Cloth Type */}
             <Box sx={{ gridColumn: "span 2" }}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Cloth Type</InputLabel>
-                <Select
-                  label="Cloth Type"
-                  value={item.clothType}
-                  onChange={(e) =>
-                    handleUpdateSubsuitableItem(
-                      index,
-                      "clothType",
-                      e.target.value as string
-                    )
-                  }
-                  disabled={pageAccess === "only view"}
-                >
-                  {clothTypeOptions.map((ct) => (
-                    <MenuItem key={ct} value={ct}>
-                      {ct}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+              <Autocomplete
+                freeSolo
+                options={clothTypeOptions}
+                value={subsuitableInput.clothType}
+                onChange={(_, newValue) =>
+                  setSubsuitableInput((prev) => ({
+                    ...prev,
+                    clothType: (newValue as string) || "",
+                  }))
+                }
+                onInputChange={(_, newInputValue) =>
+                  setSubsuitableInput((prev) => ({
+                    ...prev,
+                    clothType: newInputValue,
+                  }))
+                }
+                renderInput={(params) => (
+                  <TextField {...params} label="Cloth Type" size="small" />
+                )}
+                disabled={pageAccess === "only view"}
+              />
             </Box>
 
-            {/* Number input 1–100 */}
+            {/* Number 1–100 */}
             <TextField
               fullWidth
               size="small"
               label="Number"
               type="number"
-              value={item.number}
+              value={subsuitableInput.number}
               onChange={(e) => {
                 const raw = e.target.value;
                 if (raw === "") {
-                  handleUpdateSubsuitableItem(index, "number", "");
+                  setSubsuitableInput((prev) => ({ ...prev, number: "" }));
                   return;
                 }
                 let num = Number(raw);
                 if (Number.isNaN(num)) return;
                 if (num < 1) num = 1;
                 if (num > 100) num = 100;
-                handleUpdateSubsuitableItem(index, "number", String(num));
+                setSubsuitableInput((prev) => ({
+                  ...prev,
+                  number: String(num),
+                }));
               }}
               inputProps={{ min: 1, max: 100 }}
+              placeholder="1–100"
               disabled={pageAccess === "only view"}
             />
 
             <Button
-              variant="outlined"
-              color="error"
-              size="small"
-              onClick={() => handleRemoveSubsuitable(index)}
+              variant="contained"
+              onClick={handleAddSubsuitable}
               disabled={pageAccess === "only view"}
+              sx={{ height: 40, alignSelf: "center" }}
             >
-              Remove
+              ADD
             </Button>
           </Box>
-        ))}
-      </Box>
-    </Box>
-  )}
-</Box>
 
+          {/* Existing items */}
+          {editableSubsuitableItems.length > 0 && (
+            <Box sx={{ mt: 2 }}>
+              <Typography
+                variant="subtitle2"
+                sx={{ mb: 1, fontWeight: 600 }}
+              >
+                Added Items
+              </Typography>
 
-      {/* Lead Time - 6 columns */}
-  <Typography
-    variant="h6"
-    sx={{ mb: 2, fontWeight: 600, color: "#2c3e50" }}
-  >
-    ⏱️ Lead Time / Program Type
-  </Typography>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                {editableSubsuitableItems.map((item, index) => (
+                  <Box
+                    key={index}
+                    sx={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(6, 1fr)",
+                      gap: 2,
+                      p: 1,
+                      bgcolor: "#f5f5f5",
+                      borderRadius: 1,
+                    }}
+                  >
+                    {/* Gender */}
+                    <Box sx={{ gridColumn: "span 2" }}>
+                      <Autocomplete
+                        freeSolo
+                        options={genderOptions}
+                        value={item.gender}
+                        onChange={(_, newValue) =>
+                          handleUpdateSubsuitableItem(
+                            index,
+                            "gender",
+                            (newValue as string) || ""
+                          )
+                        }
+                        onInputChange={(_, newInputValue) =>
+                          handleUpdateSubsuitableItem(
+                            index,
+                            "gender",
+                            newInputValue
+                          )
+                        }
+                        renderInput={(params) => (
+                          <TextField {...params} label="Gender" size="small" />
+                        )}
+                        disabled={pageAccess === "only view"}
+                      />
+                    </Box>
 
-<FormControl fullWidth>
-  <InputLabel id="leadtime-label">Lead Time / Program Type</InputLabel>
-  <Select
-    labelId="leadtime-label"
-    multiple
-    label="Lead Time / Program Type"
-    value={leadtimeValue}
-    onChange={(e) => {
-      const value = e.target.value;
-      const arr =
-        typeof value === "string" ? value.split(",") : (value as string[]);
-      setForm((prev: any) => ({
-        ...prev,
-        leadtime: arr,
-      }));
-    }}
-    renderValue={(selected) => (
-      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-        {(selected as string[]).map((val) => (
-          <Chip key={val} label={val} size="small" />
-        ))}
-      </Box>
-    )}
-    disabled={pageAccess === "only view"}
-  >
-    {leadtimeOptions.map((option) => (
-      <MenuItem key={option} value={option}>
-        <Checkbox checked={leadtimeValue.includes(option)} size="small" />
-        <ListItemText primary={option} />
-      </MenuItem>
-    ))}
-  </Select>
-</FormControl>
+                    {/* Cloth Type */}
+                    <Box sx={{ gridColumn: "span 2" }}>
+                      <Autocomplete
+                        freeSolo
+                        options={clothTypeOptions}
+                        value={item.clothType}
+                        onChange={(_, newValue) =>
+                          handleUpdateSubsuitableItem(
+                            index,
+                            "clothType",
+                            (newValue as string) || ""
+                          )
+                        }
+                        onInputChange={(_, newInputValue) =>
+                          handleUpdateSubsuitableItem(
+                            index,
+                            "clothType",
+                            newInputValue
+                          )
+                        }
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            label="Cloth Type"
+                            size="small"
+                          />
+                        )}
+                        disabled={pageAccess === "only view"}
+                      />
+                    </Box>
 
+                    {/* Number */}
+                    <TextField
+                      fullWidth
+                      size="small"
+                      label="Number"
+                      type="number"
+                      value={item.number}
+                      onChange={(e) => {
+                        const raw = e.target.value;
+                        if (raw === "") {
+                          handleUpdateSubsuitableItem(index, "number", "");
+                          return;
+                        }
+                        let num = Number(raw);
+                        if (Number.isNaN(num)) return;
+                        if (num < 1) num = 1;
+                        if (num > 100) num = 100;
+                        handleUpdateSubsuitableItem(
+                          index,
+                          "number",
+                          String(num)
+                        );
+                      }}
+                      inputProps={{ min: 1, max: 100 }}
+                      disabled={pageAccess === "only view"}
+                    />
 
+                    <Button
+                      variant="outlined"
+                      color="error"
+                      size="small"
+                      onClick={() => handleRemoveSubsuitable(index)}
+                      disabled={pageAccess === "only view"}
+                    >
+                      Remove
+                    </Button>
+                  </Box>
+                ))}
+              </Box>
+            </Box>
+          )}
+        </Box>
 
-        {/* Specifications - 6 columns */}
+        {/* Lead Time / Program Type */}
+        <Typography
+          variant="h6"
+          sx={{ mb: 2, fontWeight: 600, color: "#2c3e50" }}
+        >
+          ⏱️ Lead Time / Program Type
+        </Typography>
+
+        <FormControl fullWidth>
+          <InputLabel id="leadtime-label">
+            Lead Time / Program Type
+          </InputLabel>
+          <Select
+            labelId="leadtime-label"
+            multiple
+            label="Lead Time / Program Type"
+            value={leadtimeValue}
+            onChange={(e) => {
+              const value = e.target.value;
+              const arr =
+                typeof value === "string"
+                  ? value.split(",")
+                  : (value as string[]);
+              setForm((prev: any) => ({
+                ...prev,
+                leadtime: arr,
+              }));
+            }}
+            renderValue={(selected) => (
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                {(selected as string[]).map((val) => (
+                  <Chip key={val} label={val} size="small" />
+                ))}
+              </Box>
+            )}
+            disabled={pageAccess === "only view"}
+          >
+            {leadtimeOptions.map((option) => (
+              <MenuItem key={option} value={option}>
+                <Checkbox
+                  checked={leadtimeValue.includes(option)}
+                  size="small"
+                />
+                <ListItemText primary={option} />
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        {/* Specifications */}
         <Box sx={{ mb: 3, p: 3, bgcolor: "white", borderRadius: 2 }}>
           <Typography
             variant="h6"
@@ -1179,7 +1196,12 @@ const leadtimeOptions = useMemo(() => {
               }
               disabled={pageAccess === "only view"}
             />
-            <TextField label="OZ (Auto)" type="number" value={form.oz || ""} disabled />
+            <TextField
+              label="OZ (Auto)"
+              type="number"
+              value={form.oz || ""}
+              disabled
+            />
             <TextField
               label="CM"
               type="number"
@@ -1198,7 +1220,7 @@ const leadtimeOptions = useMemo(() => {
           </Box>
         </Box>
 
-        {/* Pricing & Inventory - 6 columns */}
+        {/* Pricing & Inventory */}
         <Box sx={{ mb: 3, p: 3, bgcolor: "white", borderRadius: 2 }}>
           <Typography
             variant="h6"
@@ -1331,14 +1353,13 @@ const leadtimeOptions = useMemo(() => {
               />
             </Box>
             <TextField
-  label="Rating (0-5)"
-  type="number"
-  value={form.rating_value ?? ""}
-  onChange={handleRatingChange}
-  inputProps={{ min: 0, max: 5, step: 0.01 }}
-  disabled={pageAccess === "only view"}
-/>
-
+              label="Rating (0-5)"
+              type="number"
+              value={form.rating_value ?? ""}
+              onChange={handleRatingChange}
+              inputProps={{ min: 0, max: 5, step: 0.01 }}
+              disabled={pageAccess === "only view"}
+            />
             <TextField
               label="Rating Count"
               type="number"
@@ -1355,7 +1376,7 @@ const leadtimeOptions = useMemo(() => {
           </Box>
         </Box>
 
-        {/* SEO Fields - 6 columns */}
+        {/* SEO Settings */}
         <Box sx={{ mb: 3, p: 3, bgcolor: "white", borderRadius: 2 }}>
           <Typography
             variant="h6"
@@ -1414,79 +1435,98 @@ const leadtimeOptions = useMemo(() => {
           </Box>
         </Box>
 
-        {/* Catalog Info - 6 columns */}
-        <Box sx={{ p: 3, bgcolor: "white", borderRadius: 2 }}>
-          <Typography
-            variant="h6"
-            sx={{ mb: 2, fontWeight: 600, color: "#2c3e50" }}
-          >
-            📚 Catalog Information
-          </Typography>
-          <Box
-            sx={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 2 }}
-          >
-            <Box sx={{ gridColumn: "span 3" }}>
-              <TextField
-                label="Product Title"
-                value={form.productTitle || ""}
-                onChange={(e) =>
-                  setForm((prev: any) => ({
-                    ...prev,
-                    productTitle: e.target.value,
-                  }))
-                }
-                fullWidth
-                disabled={pageAccess === "only view"}
-              />
-            </Box>
-            <Box sx={{ gridColumn: "span 3" }}>
-              <TextField
-                label="Product Tagline"
-                value={form.productTagline || ""}
-                onChange={(e) =>
-                  setForm((prev: any) => ({
-                    ...prev,
-                    productTagline: e.target.value,
-                  }))
-                }
-                fullWidth
-                disabled={pageAccess === "only view"}
-              />
-            </Box>
-            <Box sx={{ gridColumn: "span 6" }}>
-              <TextField
-                label="Short Product Description"
-                value={form.shortProductDescription || ""}
-                onChange={(e) =>
-                  setForm((prev: any) => ({
-                    ...prev,
-                    shortProductDescription: e.target.value,
-                  }))
-                }
-                fullWidth
-                multiline
-                rows={2}
-                disabled={pageAccess === "only view"}
-              />
-            </Box>
-            <Box sx={{ gridColumn: "span 6" }}>
-              <TextField
-                label="Full Product Description"
-                value={form.fullProductDescription || ""}
-                onChange={(e) =>
-                  setForm((prev: any) => ({
-                    ...prev,
-                    fullProductDescription: e.target.value,
-                  }))
-                }
-                fullWidth
-                multiline
-                rows={2}
-                disabled={pageAccess === "only view"}
-              />
-            </Box>
-          </Box>
-        </Box>
+        {/* Catalog Info */}
+      {/* Catalog Info - 6 columns */}
+<Box sx={{ p: 3, bgcolor: "white", borderRadius: 2 }}>
+  <Typography
+    variant="h6"
+    sx={{ mb: 2, fontWeight: 600, color: "#2c3e50" }}
+  >
+    📚 Catalog Information
+  </Typography>
+  <Box
+    sx={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 2 }}
+  >
+    <Box sx={{ gridColumn: "span 3" }}>
+      <TextField
+        label="Product Title"
+        value={form.productTitle || ""}
+        onChange={(e) =>
+          setForm((prev: any) => ({
+            ...prev,
+            productTitle: e.target.value,
+          }))
+        }
+        fullWidth
+        disabled={pageAccess === "only view"}
+      />
+    </Box>
+
+    <Box sx={{ gridColumn: "span 3" }}>
+      <TextField
+        label="Product Tagline"
+        value={form.productTagline || ""}
+        onChange={(e) =>
+          setForm((prev: any) => ({
+            ...prev,
+            productTagline: e.target.value,
+          }))
+        }
+        fullWidth
+        disabled={pageAccess === "only view"}
+      />
+    </Box>
+
+    {/* 👉 Short description: small by default, resizable vertically */}
+    <Box sx={{ gridColumn: "span 6" }}>
+      <TextField
+        label="Short Product Description"
+        value={form.shortProductDescription || ""}
+        onChange={(e) =>
+          setForm((prev: any) => ({
+            ...prev,
+            shortProductDescription: e.target.value,
+          }))
+        }
+        fullWidth
+        multiline
+        minRows={2}          // minimum height
+        maxRows={6}          // grows till 6 rows, then scroll
+        sx={{
+          "& .MuiInputBase-inputMultiline": {
+            resize: "vertical",  // user can drag to make it big
+          },
+        }}
+        disabled={pageAccess === "only view"}
+      />
+    </Box>
+
+    {/* 👉 Full description: bigger default, also resizable */}
+    <Box sx={{ gridColumn: "span 6" }}>
+      <TextField
+        label="Full Product Description"
+        value={form.fullProductDescription || ""}
+        onChange={(e) =>
+          setForm((prev: any) => ({
+            ...prev,
+            fullProductDescription: e.target.value,
+          }))
+        }
+        fullWidth
+        multiline
+        minRows={3}
+        maxRows={10}
+        sx={{
+          "& .MuiInputBase-inputMultiline": {
+            resize: "vertical",
+          },
+        }}
+        disabled={pageAccess === "only view"}
+      />
+    </Box>
+  </Box>
+</Box>
+
       </DialogContent>
     </Dialog>
   );
