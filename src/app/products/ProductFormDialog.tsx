@@ -133,6 +133,9 @@ export default function ProductFormDialog({
     { key: "vendor", label: "Vendor" },
     { key: "groupcode", label: "Groupcode" },
   ];
+const TITLE_MAX = 80;          // or whatever you want
+const SHORT_DESC_MAX = 220;
+const FULL_DESC_MAX = 2000;
 
   /* ------------- dynamic Gender / ClothType options ------------- */
 
@@ -231,6 +234,60 @@ export default function ProductFormDialog({
 
     return Array.from(new Set([...LEADTIME_BASE_OPTIONS, ...fromProducts]));
   }, [products]);
+
+  // Dynamic OG Type list from existing products + current form value
+const ogTypeOptions = useMemo(() => {
+  const set = new Set<string>();
+
+  // from all saved products
+  (Array.isArray(products) ? products : []).forEach((p: any) => {
+    const val = String(p?.ogType || "").trim();
+    if (val) set.add(val);
+  });
+
+  // make sure current form value is also included
+  if (form?.ogType) {
+    set.add(String(form.ogType).trim());
+  }
+
+  return Array.from(set).sort((a, b) => a.localeCompare(b));
+}, [products, form?.ogType]);
+
+// Dynamic Product Tag list from existing products + current form
+const productTagOptions = useMemo(() => {
+  const set = new Set<string>();
+
+  // from all saved products
+  (Array.isArray(products) ? products : []).forEach((p: any) => {
+    if (!p) return;
+
+    const tags = p.productTag;
+    if (!tags) return;
+
+    if (Array.isArray(tags)) {
+      tags.forEach((t: any) => {
+        const val = String(t || "").trim();
+        if (val) set.add(val);
+      });
+    } else {
+      const val = String(tags).trim();
+      if (val) set.add(val);
+    }
+  });
+
+  // from current form value
+  if (Array.isArray(form.productTag)) {
+    form.productTag.forEach((t: any) => {
+      const val = String(t || "").trim();
+      if (val) set.add(val);
+    });
+  } else if (form.productTag) {
+    const val = String(form.productTag).trim();
+    if (val) set.add(val);
+  }
+
+  return Array.from(set).sort((a, b) => a.localeCompare(b));
+}, [products, form.productTag]);
 
   /* ------------- debug images ------------- */
 
@@ -1318,40 +1375,41 @@ export default function ProductFormDialog({
               alignItems: "start",
             }}
           >
-            <Box sx={{ gridColumn: "span 4" }}>
-              <Autocomplete
-                multiple
-                freeSolo
-                options={[]}
-                value={productTagValue}
-                onChange={(_, newValue) => {
-                  setForm((prev: any) => ({
-                    ...prev,
-                    productTag: newValue as string[],
-                  }));
-                }}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Product Tags"
-                    placeholder="Add product tags..."
-                    helperText="Press Enter to add multiple tags"
-                  />
-                )}
-                renderTags={(value, getTagProps) =>
-                  value.map((option, index) => (
-                    <Chip
-                      {...getTagProps({ index })}
-                      key={index}
-                      label={option}
-                      size="small"
-                      sx={{ m: 0.5 }}
-                    />
-                  ))
-                }
-                disabled={pageAccess === "only view"}
-              />
-            </Box>
+          <Box sx={{ gridColumn: "span 4" }}>
+  <Autocomplete
+    multiple
+    freeSolo
+    options={productTagOptions}
+    value={productTagValue}
+    onChange={(_, newValue) => {
+      setForm((prev: any) => ({
+        ...prev,
+        productTag: newValue as string[],
+      }));
+    }}
+    renderInput={(params) => (
+      <TextField
+        {...params}
+        label="Product Tags"
+        placeholder="Add product tags..."
+        helperText="Press Enter to add multiple tags"
+      />
+    )}
+    renderTags={(value, getTagProps) =>
+      value.map((option, index) => (
+        <Chip
+          {...getTagProps({ index })}
+          key={index}
+          label={option}
+          size="small"
+          sx={{ m: 0.5 }}
+        />
+      ))
+    }
+    disabled={pageAccess === "only view"}
+  />
+</Box>
+
             <TextField
               label="Rating (0-5)"
               type="number"
@@ -1388,20 +1446,33 @@ export default function ProductFormDialog({
             sx={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 2 }}
           >
             <Box sx={{ gridColumn: "span 2" }}>
-              <TextField
-                label="OG Type"
-                value={form.ogType || ""}
-                onChange={(e) =>
-                  setForm((prev: any) => ({
-                    ...prev,
-                    ogType: e.target.value,
-                  }))
-                }
-                fullWidth
-                placeholder="e.g., product, website"
-                disabled={pageAccess === "only view"}
-              />
-            </Box>
+  <Autocomplete
+    freeSolo
+    options={ogTypeOptions}
+    value={form.ogType || ""}
+    onChange={(_, newValue) =>
+      setForm((prev: any) => ({
+        ...prev,
+        ogType: (newValue as string) || "",
+      }))
+    }
+    onInputChange={(_, newInputValue) =>
+      setForm((prev: any) => ({
+        ...prev,
+        ogType: newInputValue,
+      }))
+    }
+    renderInput={(params) => (
+      <TextField
+        {...params}
+        label="OG Type"
+        placeholder="e.g., product, website"
+      />
+    )}
+    disabled={pageAccess === "only view"}
+  />
+</Box>
+
             <Box sx={{ gridColumn: "span 2" }}>
               <TextField
                 label="Twitter Card"
@@ -1437,6 +1508,7 @@ export default function ProductFormDialog({
 
         {/* Catalog Info */}
       {/* Catalog Info - 6 columns */}
+{/* Catalog Info - 6 columns */}
 <Box sx={{ p: 3, bgcolor: "white", borderRadius: 2 }}>
   <Typography
     variant="h6"
@@ -1447,21 +1519,26 @@ export default function ProductFormDialog({
   <Box
     sx={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 2 }}
   >
+    {/* Title with counter */}
     <Box sx={{ gridColumn: "span 3" }}>
       <TextField
         label="Product Title"
         value={form.productTitle || ""}
-        onChange={(e) =>
+        onChange={(e) => {
+          const value = e.target.value.slice(0, TITLE_MAX);
           setForm((prev: any) => ({
             ...prev,
-            productTitle: e.target.value,
-          }))
-        }
+            productTitle: value,
+          }));
+        }}
         fullWidth
         disabled={pageAccess === "only view"}
+        inputProps={{ maxLength: TITLE_MAX }}
+        helperText={`${(form.productTitle || "").length}/${TITLE_MAX}`}
       />
     </Box>
 
+    {/* Tagline (optional counter, add if you want) */}
     <Box sx={{ gridColumn: "span 3" }}>
       <TextField
         label="Product Tagline"
@@ -1477,41 +1554,45 @@ export default function ProductFormDialog({
       />
     </Box>
 
-    {/* 👉 Short description: small by default, resizable vertically */}
+    {/* Short description with counter */}
     <Box sx={{ gridColumn: "span 6" }}>
       <TextField
         label="Short Product Description"
         value={form.shortProductDescription || ""}
-        onChange={(e) =>
+        onChange={(e) => {
+          const value = e.target.value.slice(0, SHORT_DESC_MAX);
           setForm((prev: any) => ({
             ...prev,
-            shortProductDescription: e.target.value,
-          }))
-        }
+            shortProductDescription: value,
+          }));
+        }}
         fullWidth
         multiline
-        minRows={2}          // minimum height
-        maxRows={6}          // grows till 6 rows, then scroll
+        minRows={2}
+        maxRows={6}
         sx={{
           "& .MuiInputBase-inputMultiline": {
-            resize: "vertical",  // user can drag to make it big
+            resize: "vertical",
           },
         }}
         disabled={pageAccess === "only view"}
+        inputProps={{ maxLength: SHORT_DESC_MAX }}
+        helperText={`${(form.shortProductDescription || "").length}/${SHORT_DESC_MAX}`}
       />
     </Box>
 
-    {/* 👉 Full description: bigger default, also resizable */}
+    {/* Full description with counter */}
     <Box sx={{ gridColumn: "span 6" }}>
       <TextField
         label="Full Product Description"
         value={form.fullProductDescription || ""}
-        onChange={(e) =>
+        onChange={(e) => {
+          const value = e.target.value.slice(0, FULL_DESC_MAX);
           setForm((prev: any) => ({
             ...prev,
-            fullProductDescription: e.target.value,
-          }))
-        }
+            fullProductDescription: value,
+          }));
+        }}
         fullWidth
         multiline
         minRows={3}
@@ -1522,10 +1603,13 @@ export default function ProductFormDialog({
           },
         }}
         disabled={pageAccess === "only view"}
+        inputProps={{ maxLength: FULL_DESC_MAX }}
+        helperText={`${(form.fullProductDescription || "").length}/${FULL_DESC_MAX}`}
       />
     </Box>
   </Box>
 </Box>
+
 
       </DialogContent>
     </Dialog>
