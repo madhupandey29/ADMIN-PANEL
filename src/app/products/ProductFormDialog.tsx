@@ -18,7 +18,6 @@ import {
   MenuItem,
   InputAdornment,
   Checkbox,
-  FormControlLabel,
   CircularProgress,
    ListItemText  
 } from "@mui/material";
@@ -134,6 +133,37 @@ export default function ProductFormDialog({
     { key: "vendor", label: "Vendor" },
     { key: "groupcode", label: "Groupcode" },
   ];
+  const GENDER_OPTIONS = ["Men", "Women", "Kids", "Unisex"];
+
+// Build dynamic cloth-type list from all existing products + current editable items
+const clothTypeOptions = useMemo(() => {
+  const set = new Set<string>();
+
+  // from all saved products
+  (Array.isArray(products) ? products : []).forEach((p: any) => {
+    if (!p || !Array.isArray(p.subsuitable)) return;
+
+    p.subsuitable.forEach((item: any) => {
+      // support both old string format ("Men-Shirt-42") and new object format
+      let ct = "";
+      if (typeof item === "string") {
+        const parts = item.split("-").map((s) => s.trim());
+        ct = parts[1] || ""; // 2nd part = cloth type
+      } else if (item && typeof item === "object") {
+        ct = String(item.clothType || "").trim();
+      }
+      if (ct) set.add(ct);
+    });
+  });
+
+  // from current editable items (in this form)
+  editableSubsuitableItems.forEach((item) => {
+    if (item.clothType) set.add(item.clothType.trim());
+  });
+
+  return Array.from(set).sort((a, b) => a.localeCompare(b));
+}, [products, editableSubsuitableItems]);
+
 const handleRatingChange = (e: React.ChangeEvent<HTMLInputElement>) => {
   const value = e.target.value;
 
@@ -833,156 +863,228 @@ const leadtimeOptions = useMemo(() => {
         </Box>
 
         {/* Subsuitable Builder - 6 columns */}
-        <Box sx={{ mb: 3, p: 3, bgcolor: "white", borderRadius: 2 }}>
-          <Typography
-            variant="h6"
-            sx={{ mb: 2, fontWeight: 600, color: "#2c3e50" }}
-          >
-            👔 Suitable For (Gender-ClothType-Number)
-          </Typography>
+       {/* Subsuitable Builder - 6 columns */}
+<Box sx={{ mb: 3, p: 3, bgcolor: "white", borderRadius: 2 }}>
+  <Typography
+    variant="h6"
+    sx={{ mb: 2, fontWeight: 600, color: "#2c3e50" }}
+  >
+    👔 Suitable For (Gender – Cloth Type – Number)
+  </Typography>
 
-          {/* Input fields for adding new subsuitable item */}
+  {/* ➕ Add new row */}
+  <Box
+    sx={{
+      display: "grid",
+      gridTemplateColumns: "repeat(6, 1fr)",
+      gap: 2,
+      mb: 2,
+    }}
+  >
+    {/* Gender select */}
+    <Box sx={{ gridColumn: "span 2" }}>
+      <FormControl fullWidth size="small">
+        <InputLabel>Gender</InputLabel>
+        <Select
+          label="Gender"
+          value={subsuitableInput.gender}
+          onChange={(e) =>
+            setSubsuitableInput((prev) => ({
+              ...prev,
+              gender: e.target.value as string,
+            }))
+          }
+          disabled={pageAccess === "only view"}
+        >
+          {GENDER_OPTIONS.map((g) => (
+            <MenuItem key={g} value={g}>
+              {g}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+    </Box>
+
+    {/* Cloth Type select (dynamic from old products) */}
+    <Box sx={{ gridColumn: "span 2" }}>
+      <FormControl fullWidth size="small">
+        <InputLabel>Cloth Type</InputLabel>
+        <Select
+          label="Cloth Type"
+          value={subsuitableInput.clothType}
+          onChange={(e) =>
+            setSubsuitableInput((prev) => ({
+              ...prev,
+              clothType: e.target.value as string,
+            }))
+          }
+          disabled={pageAccess === "only view"}
+        >
+          {clothTypeOptions.length === 0 ? (
+            <MenuItem value="" disabled>
+              No cloth types found yet
+            </MenuItem>
+          ) : (
+            clothTypeOptions.map((ct) => (
+              <MenuItem key={ct} value={ct}>
+                {ct}
+              </MenuItem>
+            ))
+          )}
+        </Select>
+      </FormControl>
+    </Box>
+
+    {/* Number input 1–100 (no dropdown) */}
+    <TextField
+      fullWidth
+      size="small"
+      label="Number"
+      type="number"
+      value={subsuitableInput.number}
+      onChange={(e) => {
+        const raw = e.target.value;
+        if (raw === "") {
+          // allow clearing
+          setSubsuitableInput((prev) => ({ ...prev, number: "" }));
+          return;
+        }
+        let num = Number(raw);
+        if (Number.isNaN(num)) return;
+        if (num < 1) num = 1;
+        if (num > 100) num = 100;
+        setSubsuitableInput((prev) => ({
+          ...prev,
+          number: String(num),
+        }));
+      }}
+      inputProps={{ min: 1, max: 100 }}
+      placeholder="1–100"
+      disabled={pageAccess === "only view"}
+    />
+
+    <Button
+      variant="contained"
+      onClick={handleAddSubsuitable}
+      disabled={pageAccess === "only view"}
+      sx={{ height: 40, alignSelf: "center" }}
+    >
+      ADD
+    </Button>
+  </Box>
+
+  {/* 📝 Existing items (edit mode) */}
+  {editableSubsuitableItems.length > 0 && (
+    <Box sx={{ mt: 2 }}>
+      <Typography
+        variant="subtitle2"
+        sx={{ mb: 1, fontWeight: 600 }}
+      >
+        Added Items
+      </Typography>
+
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+        {editableSubsuitableItems.map((item, index) => (
           <Box
+            key={index}
             sx={{
               display: "grid",
               gridTemplateColumns: "repeat(6, 1fr)",
               gap: 2,
-              mb: 2,
+              p: 1,
+              bgcolor: "#f5f5f5",
+              borderRadius: 1,
             }}
           >
+            {/* Gender select */}
             <Box sx={{ gridColumn: "span 2" }}>
-              <TextField
-                fullWidth
-                label="Gender"
-                value={subsuitableInput.gender}
-                onChange={(e) =>
-                  setSubsuitableInput((prev) => ({
-                    ...prev,
-                    gender: e.target.value,
-                  }))
-                }
-                placeholder="e.g., Men, Women, Kids"
-                disabled={pageAccess === "only view"}
-              />
+              <FormControl fullWidth size="small">
+                <InputLabel>Gender</InputLabel>
+                <Select
+                  label="Gender"
+                  value={item.gender}
+                  onChange={(e) =>
+                    handleUpdateSubsuitableItem(
+                      index,
+                      "gender",
+                      e.target.value as string
+                    )
+                  }
+                  disabled={pageAccess === "only view"}
+                >
+                  {GENDER_OPTIONS.map((g) => (
+                    <MenuItem key={g} value={g}>
+                      {g}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </Box>
+
+            {/* Cloth Type select */}
             <Box sx={{ gridColumn: "span 2" }}>
-              <TextField
-                fullWidth
-                label="Type of Cloth"
-                value={subsuitableInput.clothType}
-                onChange={(e) =>
-                  setSubsuitableInput((prev) => ({
-                    ...prev,
-                    clothType: e.target.value,
-                  }))
-                }
-                placeholder="e.g., Shirt, Dress, Pants"
-                disabled={pageAccess === "only view"}
-              />
+              <FormControl fullWidth size="small">
+                <InputLabel>Cloth Type</InputLabel>
+                <Select
+                  label="Cloth Type"
+                  value={item.clothType}
+                  onChange={(e) =>
+                    handleUpdateSubsuitableItem(
+                      index,
+                      "clothType",
+                      e.target.value as string
+                    )
+                  }
+                  disabled={pageAccess === "only view"}
+                >
+                  {clothTypeOptions.map((ct) => (
+                    <MenuItem key={ct} value={ct}>
+                      {ct}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </Box>
+
+            {/* Number input 1–100 */}
             <TextField
               fullWidth
+              size="small"
               label="Number"
-              value={subsuitableInput.number}
-              onChange={(e) =>
-                setSubsuitableInput((prev) => ({
-                  ...prev,
-                  number: e.target.value,
-                }))
-              }
-              placeholder="e.g., 42, 38"
+              type="number"
+              value={item.number}
+              onChange={(e) => {
+                const raw = e.target.value;
+                if (raw === "") {
+                  handleUpdateSubsuitableItem(index, "number", "");
+                  return;
+                }
+                let num = Number(raw);
+                if (Number.isNaN(num)) return;
+                if (num < 1) num = 1;
+                if (num > 100) num = 100;
+                handleUpdateSubsuitableItem(index, "number", String(num));
+              }}
+              inputProps={{ min: 1, max: 100 }}
               disabled={pageAccess === "only view"}
             />
+
             <Button
-              variant="contained"
-              onClick={handleAddSubsuitable}
+              variant="outlined"
+              color="error"
+              size="small"
+              onClick={() => handleRemoveSubsuitable(index)}
               disabled={pageAccess === "only view"}
-              sx={{ height: "56px" }}
             >
-              Add
+              Remove
             </Button>
           </Box>
+        ))}
+      </Box>
+    </Box>
+  )}
+</Box>
 
-          {/* Display added subsuitable items */}
-          {editableSubsuitableItems.length > 0 && (
-            <Box sx={{ mt: 2 }}>
-              <Typography
-                variant="subtitle2"
-                sx={{ mb: 1, fontWeight: 600 }}
-              >
-                Added Items:
-              </Typography>
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                {editableSubsuitableItems.map((item, index) => (
-                  <Box
-                    key={index}
-                    sx={{
-                      display: "grid",
-                      gridTemplateColumns: "repeat(6, 1fr)",
-                      gap: 2,
-                      p: 1,
-                      bgcolor: "#f5f5f5",
-                      borderRadius: 1,
-                    }}
-                  >
-                    <Box sx={{ gridColumn: "span 2" }}>
-                      <TextField
-                        fullWidth
-                        size="small"
-                        value={item.gender}
-                        onChange={(e) =>
-                          handleUpdateSubsuitableItem(
-                            index,
-                            "gender",
-                            e.target.value
-                          )
-                        }
-                        disabled={pageAccess === "only view"}
-                      />
-                    </Box>
-                    <Box sx={{ gridColumn: "span 2" }}>
-                      <TextField
-                        fullWidth
-                        size="small"
-                        value={item.clothType}
-                        onChange={(e) =>
-                          handleUpdateSubsuitableItem(
-                            index,
-                            "clothType",
-                            e.target.value
-                          )
-                        }
-                        disabled={pageAccess === "only view"}
-                      />
-                    </Box>
-                    <TextField
-                      fullWidth
-                      size="small"
-                      value={item.number}
-                      onChange={(e) =>
-                        handleUpdateSubsuitableItem(
-                          index,
-                          "number",
-                          e.target.value
-                        )
-                      }
-                      disabled={pageAccess === "only view"}
-                    />
-                    <Button
-                      variant="outlined"
-                      color="error"
-                      size="small"
-                      onClick={() => handleRemoveSubsuitable(index)}
-                      disabled={pageAccess === "only view"}
-                    >
-                      Remove
-                    </Button>
-                  </Box>
-                ))}
-              </Box>
-            </Box>
-          )}
-        </Box>
 
       {/* Lead Time - 6 columns */}
   <Typography
