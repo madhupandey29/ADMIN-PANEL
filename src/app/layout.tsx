@@ -431,7 +431,7 @@ const Sidebar = React.memo(() => {
           {/* Product * Location */}
           <ListItemButton
             component={NextLink}
-            href="/seo"
+            href="/product-location-seo"
             sx={{
               borderRadius: '10px',
               mb: 0.75,
@@ -484,7 +484,7 @@ const Sidebar = React.memo(() => {
           {/* Static SEO */}
           <ListItemButton
             component={NextLink}
-            href="/static-seo"
+            href="/topicpage-seo"
             sx={{
               borderRadius: '10px',
               mb: 0.75,

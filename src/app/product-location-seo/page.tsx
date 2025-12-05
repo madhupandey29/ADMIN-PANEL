@@ -46,14 +46,54 @@ interface SeoData {
   product?: string | Product;
   location?: string | Location;
   slug?: string;
+
+  // core meta
   title?: string;
   description?: string;
   excerpt?: string;
   keywords?: string;
   canonical_url?: string;
+
+  // product × location content
+  productlocationtitle?: string;
+  productlocationtagline?: string;
+  productlocationdescription1?: string;
+  productlocationdescription2?: string;
+
+  // OG/Twitter combined meta
+  meta_og_twitter_title_product_location?: string;
+  meta_og_twitter_description_product_location?: string;
+
+  // language / locale
+  contentLanguage?: string;
+  ogLocale?: string;
+
+  // video OG
+  ogVideoUrl?: string;
+  ogVideoSecureUrl?: string;
+  ogVideoType?: string;
+  ogVideoWidth?: number;
+  ogVideoHeight?: number;
+
+  // twitter player
+  twitterPlayer?: string;
+  twitterPlayerWidth?: number;
+  twitterPlayerHeight?: number;
+
+  // JSON-LD
+  VideoJsonLd?: string;
+
+  // extra flags
   noindex?: boolean;
   nofollow?: boolean;
   priority?: number;
+
+  // in case you use these flags from SEO schema
+  popularproduct?: boolean;
+  topratedproduct?: boolean;
+  landingPageProduct?: boolean;
+  shopyProduct?: boolean;
+
   [key: string]: unknown;
 }
 
@@ -113,6 +153,7 @@ function SeoPage() {
 
   // Define columns for EnhancedDataTable
   const columns: Column<SeoData>[] = useMemo(() => [
+    // PRODUCT
     {
       id: 'product',
       label: 'Product',
@@ -123,7 +164,6 @@ function SeoPage() {
         if (typeof prod === 'object' && prod !== null && 'name' in prod) {
           return (prod as Product).name || '';
         }
-        // If it's just an ID string, try to find the product
         if (typeof prod === 'string') {
           const foundProduct = products.find(p => p._id === prod);
           return foundProduct?.name || '';
@@ -132,8 +172,6 @@ function SeoPage() {
       },
       format: (_value: unknown, row: SeoData) => {
         const prod = row.product;
-        
-        // Handle populated product object
         if (typeof prod === 'object' && prod !== null && 'name' in prod) {
           const product = prod as Product;
           return (
@@ -160,8 +198,6 @@ function SeoPage() {
             </Box>
           );
         }
-        
-        // Handle product ID string - find product from products list
         if (typeof prod === 'string') {
           const foundProduct = products.find(p => p._id === prod);
           if (foundProduct) {
@@ -190,10 +226,11 @@ function SeoPage() {
             );
           }
         }
-        
         return <Typography variant="body2">-</Typography>;
       },
     },
+
+    // LOCATION
     {
       id: 'location',
       label: 'Location',
@@ -204,7 +241,6 @@ function SeoPage() {
         if (typeof loc === 'object' && loc !== null && 'name' in loc) {
           return (loc as Location).name || '';
         }
-        // If it's just an ID string, try to find the location
         if (typeof loc === 'string') {
           const foundLocation = locations.find(l => l._id === loc);
           return foundLocation?.name || '';
@@ -213,24 +249,21 @@ function SeoPage() {
       },
       format: (_value: unknown, row: SeoData) => {
         const loc = row.location;
-        
-        // Handle populated location object
         if (typeof loc === 'object' && loc !== null && 'name' in loc) {
           const location = loc as Location;
           return <Typography variant="body2">{location.name}</Typography>;
         }
-        
-        // Handle location ID string - find location from locations list
         if (typeof loc === 'string') {
           const foundLocation = locations.find(l => l._id === loc);
           if (foundLocation) {
             return <Typography variant="body2">{foundLocation.name}</Typography>;
           }
         }
-        
         return <Typography variant="body2">-</Typography>;
       },
     },
+
+    // CORE URL
     {
       id: 'slug',
       label: 'Slug',
@@ -239,26 +272,292 @@ function SeoPage() {
       format: (_value: unknown, row: SeoData) => row.slug || '-',
     },
     {
+      id: 'canonical_url',
+      label: 'Canonical URL',
+      sortable: true,
+      filterable: true,
+      format: (_value: unknown, row: SeoData) => row.canonical_url || '-',
+    },
+
+    // META TITLE / DESCRIPTION
+    {
+      id: 'title',
+      label: 'Meta Title',
+      sortable: true,
+      filterable: true,
+      format: (_value: unknown, row: SeoData) => row.title || '-',
+    },
+    {
+      id: 'description',
+      label: 'Meta Description',
+      sortable: true,
+      filterable: true,
+      format: (_value: unknown, row: SeoData) => {
+        const desc = row.description as string;
+        if (!desc) return '-';
+        return desc.length > 80 ? `${desc.substring(0, 80)}…` : desc;
+      },
+    },
+    {
       id: 'excerpt',
       label: 'Excerpt',
+      sortable: true,
+      filterable: true,
       format: (_value: unknown, row: SeoData) => {
         const excerpt = row.excerpt as string;
-        return excerpt ? (excerpt.length > 50 ? excerpt.substring(0, 50) + '...' : excerpt) : '-';
+        return excerpt ? (excerpt.length > 50 ? excerpt.substring(0, 50) + '…' : excerpt) : '-';
       },
     },
     {
       id: 'keywords',
       label: 'Keywords',
+      sortable: true,
+      filterable: true,
       format: (_value: unknown, row: SeoData) => row.keywords || '-',
     },
+
+    // PRODUCT × LOCATION TITLE / TAGLINE
     {
-      id: 'canonical_url',
-      label: 'Canonical URL',
-      format: (_value: unknown, row: SeoData) => row.canonical_url || '-',
+      id: 'productlocationtitle',
+      label: 'Product Location Title',
+      sortable: true,
+      filterable: true,
+      format: (_value: unknown, row: SeoData) => row.productlocationtitle || '-',
+    },
+    {
+      id: 'productlocationtagline',
+      label: 'Product Location Tagline',
+      sortable: true,
+      filterable: true,
+      format: (_value: unknown, row: SeoData) => row.productlocationtagline || '-',
+    },
+
+    // PRODUCT × LOCATION DESCRIPTIONS (SHORT PREVIEW)
+    {
+      id: 'productlocationdescription1',
+      label: 'Description 1 (short)',
+      sortable: false,
+      filterable: false,
+      format: (_value: unknown, row: SeoData) => {
+        const d = row.productlocationdescription1 as string;
+        if (!d) return '-';
+        const text = d.replace(/<[^>]+>/g, ''); // strip HTML tags for preview
+        return text.length > 80 ? text.substring(0, 80) + '…' : text;
+      },
+    },
+    {
+      id: 'productlocationdescription2',
+      label: 'Description 2 (short)',
+      sortable: false,
+      filterable: false,
+      format: (_value: unknown, row: SeoData) => {
+        const d = row.productlocationdescription2 as string;
+        if (!d) return '-';
+        const text = d.replace(/<[^>]+>/g, '');
+        return text.length > 80 ? text.substring(0, 80) + '…' : text;
+      },
+    },
+
+    // OG + TWITTER META TITLE / DESCRIPTION
+    {
+      id: 'meta_og_twitter_title_product_location',
+      label: 'OG/Twitter Title (P×L)',
+      sortable: true,
+      filterable: true,
+      format: (_value: unknown, row: SeoData) =>
+        row.meta_og_twitter_title_product_location || '-',
+    },
+    {
+      id: 'meta_og_twitter_description_product_location',
+      label: 'OG/Twitter Description (P×L)',
+      sortable: true,
+      filterable: true,
+      format: (_value: unknown, row: SeoData) => {
+        const d = row.meta_og_twitter_description_product_location as string;
+        if (!d) return '-';
+        return d.length > 80 ? d.substring(0, 80) + '…' : d;
+      },
+    },
+
+    // LANGUAGE / LOCALE
+    {
+      id: 'contentLanguage',
+      label: 'Content Language',
+      sortable: true,
+      filterable: true,
+      format: (_value: unknown, row: SeoData) => row.contentLanguage || '-',
+    },
+    {
+      id: 'ogLocale',
+      label: 'OG Locale',
+      sortable: true,
+      filterable: true,
+      format: (_value: unknown, row: SeoData) => row.ogLocale || '-',
+    },
+
+    // VIDEO: OG URL FIELDS
+    {
+      id: 'ogVideoUrl',
+      label: 'OG Video URL',
+      sortable: false,
+      filterable: true,
+      format: (_value: unknown, row: SeoData) => row.ogVideoUrl || '-',
+    },
+    {
+      id: 'ogVideoSecureUrl',
+      label: 'OG Video Secure URL',
+      sortable: false,
+      filterable: true,
+      format: (_value: unknown, row: SeoData) => row.ogVideoSecureUrl || '-',
+    },
+    {
+      id: 'ogVideoType',
+      label: 'OG Video Type',
+      sortable: true,
+      filterable: true,
+      format: (_value: unknown, row: SeoData) => row.ogVideoType || '-',
+    },
+    {
+      id: 'ogVideoWidth',
+      label: 'OG Video Width',
+      sortable: true,
+      filterable: true,
+      format: (_value: unknown, row: SeoData) =>
+        typeof row.ogVideoWidth === 'number' ? row.ogVideoWidth : '-',
+    },
+    {
+      id: 'ogVideoHeight',
+      label: 'OG Video Height',
+      sortable: true,
+      filterable: true,
+      format: (_value: unknown, row: SeoData) =>
+        typeof row.ogVideoHeight === 'number' ? row.ogVideoHeight : '-',
+    },
+
+    // TWITTER PLAYER
+    {
+      id: 'twitterPlayer',
+      label: 'Twitter Player URL',
+      sortable: false,
+      filterable: true,
+      format: (_value: unknown, row: SeoData) => row.twitterPlayer || '-',
+    },
+    {
+      id: 'twitterPlayerWidth',
+      label: 'Twitter Width',
+      sortable: true,
+      filterable: true,
+      format: (_value: unknown, row: SeoData) =>
+        typeof row.twitterPlayerWidth === 'number' ? row.twitterPlayerWidth : '-',
+    },
+    {
+      id: 'twitterPlayerHeight',
+      label: 'Twitter Height',
+      sortable: true,
+      filterable: true,
+      format: (_value: unknown, row: SeoData) =>
+        typeof row.twitterPlayerHeight === 'number' ? row.twitterPlayerHeight : '-',
+    },
+
+    // JSON-LD (PREVIEW)
+    {
+      id: 'VideoJsonLd',
+      label: 'Video JSON-LD (short)',
+      sortable: false,
+      filterable: false,
+      format: (_value: unknown, row: SeoData) => {
+        const d = row.VideoJsonLd as string;
+        if (!d) return '-';
+        return d.length > 80 ? d.substring(0, 80) + '…' : d;
+      },
+    },
+
+    // FLAGS: NOINDEX / NOFOLLOW / PRIORITY
+    {
+      id: 'noindex',
+      label: 'No Index',
+      sortable: true,
+      filterable: true,
+      format: (_value: unknown, row: SeoData) =>
+        row.noindex ? (
+          <Chip label="No Index" size="small" color="error" />
+        ) : (
+          <Chip label="Index" size="small" color="success" />
+        ),
+    },
+    {
+      id: 'nofollow',
+      label: 'No Follow',
+      sortable: true,
+      filterable: true,
+      format: (_value: unknown, row: SeoData) =>
+        row.nofollow ? (
+          <Chip label="No Follow" size="small" color="error" />
+        ) : (
+          <Chip label="Follow" size="small" color="success" />
+        ),
+    },
+    {
+      id: 'priority',
+      label: 'Priority',
+      sortable: true,
+      filterable: true,
+      format: (_value: unknown, row: SeoData) =>
+        typeof row.priority === 'number' ? row.priority.toFixed(1) : '-',
+    },
+
+    // FLAGS: POPULAR / TOP / LANDING / SHOPY
+    {
+      id: 'popularproduct',
+      label: 'Popular',
+      sortable: true,
+      filterable: true,
+      format: (_value: unknown, row: SeoData) =>
+        row.popularproduct ? (
+          <Chip label="Popular" size="small" color="success" />
+        ) : (
+          <Chip label="-" size="small" />
+        ),
+    },
+    {
+      id: 'topratedproduct',
+      label: 'Top Rated',
+      sortable: true,
+      filterable: true,
+      format: (_value: unknown, row: SeoData) =>
+        row.topratedproduct ? (
+          <Chip label="Top Rated" size="small" color="primary" />
+        ) : (
+          <Chip label="-" size="small" />
+        ),
+    },
+    {
+      id: 'landingPageProduct',
+      label: 'Landing Page',
+      sortable: true,
+      filterable: true,
+      format: (_value: unknown, row: SeoData) =>
+        row.landingPageProduct ? (
+          <Chip label="Landing" size="small" color="secondary" />
+        ) : (
+          <Chip label="-" size="small" />
+        ),
+    },
+    {
+      id: 'shopyProduct',
+      label: 'Shopy Product',
+      sortable: true,
+      filterable: true,
+      format: (_value: unknown, row: SeoData) =>
+        row.shopyProduct ? (
+          <Chip label="Shopy" size="small" color="secondary" />
+        ) : (
+          <Chip label="-" size="small" />
+        ),
     },
   ], [products, locations]);
 
-  // Statistics
+  // Statistics (optional – you can extend to use new fields if you want)
   const stats = useMemo(() => {
     const total = seoList.length;
     const withExcerpt = seoList.filter(s => s.excerpt).length;
@@ -271,7 +570,7 @@ function SeoPage() {
     };
   }, [seoList]);
 
-  // Handlers for EnhancedDataTable
+  // Handlers
   const handleAdd = useCallback(() => {
     setForm({});
     setEditId(null);
@@ -280,14 +579,11 @@ function SeoPage() {
 
   const handleEdit = useCallback((seo: SeoData) => {
     setEditId(seo._id as string);
-    
-    // Extract IDs from populated fields
     const formData: SeoData = {
       ...seo,
       product: typeof seo.product === 'object' && seo.product ? (seo.product as Product)._id : seo.product,
       location: typeof seo.location === 'object' && seo.location ? (seo.location as Location)._id : seo.location,
     };
-    
     setForm(formData);
     setOpen(true);
   }, []);
@@ -388,7 +684,6 @@ function SeoPage() {
     }
   };
 
-  // Render
   if (pageAccess === 'no access') {
     return (
       <Box sx={{ textAlign: 'center', py: 8 }}>
@@ -417,12 +712,12 @@ function SeoPage() {
       {/* Header */}
       <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
         <Box>
-          <Typography variant="h5" sx={{ fontWeight: 600, mb: 0.5 }}>
-            🔍 SEO Management
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Manage SEO settings for your products and locations with advanced filtering
-          </Typography>
+      <Typography variant="h5" sx={{ fontWeight: 600, mb: 0.5 }}>
+  🔍 Product × Location SEO
+</Typography>
+<Typography variant="body2" color="text.secondary">
+  Manage SEO for product × location landing pages
+</Typography>
         </Box>
 
         {/* Bulk Actions */}
@@ -436,16 +731,16 @@ function SeoPage() {
           >
             Export ({selectedSeos.length})
           </Button>
-          <Button
-            variant="contained"
-            size="small"
-            color="success"
-            startIcon={<AddIcon />}
-            onClick={handleAdd}
-            disabled={pageAccess === 'only view'}
-          >
-            Add New SEO Entry
-          </Button>
+         <Button
+  variant="contained"
+  size="small"
+  color="success"
+  startIcon={<AddIcon />}
+  onClick={handleAdd}
+  disabled={pageAccess === 'only view'}
+>
+  Add Product × Location SEO
+</Button>
         </Box>
       </Box>
 

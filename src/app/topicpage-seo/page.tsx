@@ -135,64 +135,108 @@ export default function TopicPageSeoPage() {
   }, [fetchTopicPageSeos, fetchProductTags]);
 
   // Define columns for EnhancedDataTable
-  const columns: Column<Partial<TopicPageSEO>>[] = useMemo(() => [
-    {
-      id: 'name',
-      label: 'Name',
-      sortable: true,
-      filterable: true,
-      format: (value, seo) => seo.name || '-',
+const columns: Column<Partial<TopicPageSEO>>[] = useMemo(() => [
+  {
+    id: 'name',
+    label: 'Topic Page Name',
+    sortable: true,
+    filterable: true,
+    format: (_, seo) => seo.name || '-',
+  },
+  {
+    id: 'slug',
+    label: 'Slug',
+    sortable: true,
+    filterable: true,
+    format: (_, seo) => seo.slug || '-',
+  },
+  {
+    id: 'meta_title',
+    label: 'Meta Title',
+    sortable: true,
+    filterable: true,
+    format: (_, seo) => seo.meta_title || '-',
+  },
+  {
+    id: 'meta_description',
+    label: 'Meta Description',
+    sortable: false,
+    filterable: true,
+    format: (_, seo) => seo.meta_description || '-',
+  },
+  {
+    id: 'canonical_url',
+    label: 'Canonical URL',
+    sortable: false,
+    filterable: true,
+    format: (_, seo) => seo.canonical_url || '-',
+  },
+  {
+    id: 'contentLanguage',
+    label: 'Content Lang',
+    sortable: true,
+    filterable: true,
+    format: (_, seo) => seo.contentLanguage || '-',
+  },
+  {
+    id: 'ogLocale',
+    label: 'OG Locale',
+    sortable: true,
+    filterable: true,
+    format: (_, seo) => seo.ogLocale || '-',
+  },
+  {
+    id: 'twitterCard',
+    label: 'Twitter Card',
+    sortable: true,
+    filterable: true,
+    format: (_, seo) => seo.twitterCard || '-',
+  },
+  {
+    id: 'producttag',
+    label: 'Product Tags',
+    format: (_, seo) => {
+      const tags = seo.producttag;
+      if (!tags) return '-';
+      const tagArray = Array.isArray(tags) ? tags : [tags];
+      return (
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+          {tagArray.map((tag, index) => (
+            <Chip key={index} label={tag} size="small" sx={{ fontSize: '11px' }} />
+          ))}
+        </Box>
+      );
     },
-    {
-      id: 'slug',
-      label: 'Slug',
-      sortable: true,
-      filterable: true,
-      format: (value, seo) => seo.slug || '-',
-    },
-    {
-      id: 'meta_title',
-      label: 'Meta Title',
-      sortable: true,
-      filterable: true,
-      format: (value, seo) => seo.meta_title || '-',
-    },
-    {
-      id: 'producttag',
-      label: 'Product Tags',
-      format: (value, seo) => {
-        const tags = seo.producttag;
-        if (!tags) return '-';
-        const tagArray = Array.isArray(tags) ? tags : [tags];
-        return (
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-            {tagArray.map((tag, index) => (
-              <Chip key={index} label={tag} size="small" sx={{ fontSize: '11px' }} />
-            ))}
-          </Box>
-        );
-      },
-    },
-    {
-      id: 'status',
-      label: 'Status',
-      sortable: true,
-      filterable: true,
-      format: (value, seo) => (
-        <Chip
-          label={seo.status || 'draft'}
-          color={
-            seo.status === 'published'
-              ? 'success'
-              : seo.status === 'archived'
-                ? 'default'
-                : 'warning'
-          }
-          size="small"
-        />
-      ),
-    },
-  ], []);
+  },
+  {
+    id: 'status',
+    label: 'Status',
+    sortable: true,
+    filterable: true,
+    format: (_, seo) => (
+      <Chip
+        label={seo.status || 'draft'}
+        color={
+          seo.status === 'published'
+            ? 'success'
+            : seo.status === 'archived'
+            ? 'default'
+            : 'warning'
+        }
+        size="small"
+      />
+    ),
+  },
+  {
+    id: 'createdAt',
+    label: 'Created',
+    sortable: true,
+    filterable: false,
+    format: (_, seo) =>
+      seo.createdAt ? new Date(seo.createdAt).toLocaleString() : '-',
+  },
+], []);
+
 
   // Statistics
   const stats = useMemo(() => {
@@ -247,14 +291,14 @@ export default function TopicPageSeoPage() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to save SEO data');
+        throw new Error('Failed to save topic page SEO');
       }
 
       await fetchTopicPageSeos();
       handleClose();
-      alert(editId ? 'SEO entry updated successfully!' : 'SEO entry created successfully!');
+      alert(editId ? 'Topic page SEO updated successfully!' : 'Topic page SEO created successfully!');
     } catch (error) {
-      console.error('Error saving SEO data:', error);
+      console.error('Error saving topic page SEO:', error);
       alert('An error occurred while saving');
     } finally {
       setSubmitting(false);
@@ -273,13 +317,13 @@ export default function TopicPageSeoPage() {
         await fetchTopicPageSeos();
         setViewOpen(false);
         setSelectedSeo(null);
-        alert('SEO entry updated successfully!');
+        alert('Topic page SEO updated successfully!');
       } else {
         const data = await response.json();
-        alert(data.message || 'Failed to update SEO entry');
+        alert(data.message || 'Failed to update topic page SEO');
       }
     } catch (error) {
-      console.error('Error updating SEO:', error);
+      console.error('Error updating topic page SEO:', error);
       alert('An error occurred while updating');
     }
   }, [fetchTopicPageSeos]);
@@ -287,11 +331,11 @@ export default function TopicPageSeoPage() {
   const handleDelete = useCallback(async (seo: Partial<TopicPageSEO>) => {
     if (!seo._id) return;
 
-    if (confirm(`Are you sure you want to delete "${seo.name}"?`)) {
+    if (confirm(`Are you sure you want to delete topic page "${seo.name}"?`)) {
       try {
         await apiFetch(`/topicpage-seo/${seo._id}`, { method: 'DELETE' });
         fetchTopicPageSeos();
-        alert(`SEO entry "${seo.name}" deleted successfully!`);
+        alert(`Topic page "${seo.name}" deleted successfully!`);
       } catch (error) {
         console.error('Error deleting topic page SEO:', error);
         alert('Failed to delete topic page SEO');
@@ -307,11 +351,11 @@ export default function TopicPageSeoPage() {
     const url = URL.createObjectURL(dataBlob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `static-seo-export-${new Date().toISOString().split('T')[0]}.json`;
+    link.download = `topic-page-seo-export-${new Date().toISOString().split('T')[0]}.json`;
     link.click();
     URL.revokeObjectURL(url);
 
-    alert(`Exported ${selectedSeos.length} SEO entries successfully!`);
+    alert(`Exported ${selectedSeos.length} topic page SEO entries successfully!`);
   }, [selectedSeos]);
 
   if (pageAccess === 'no access') {
@@ -321,7 +365,7 @@ export default function TopicPageSeoPage() {
           Access Denied
         </Typography>
         <Typography variant="body1" sx={{ color: '#7f8c8d' }}>
-          You don&apos;t have permission to access this page.
+          You don&apos;t have permission to access Topic Page SEO.
         </Typography>
       </Box>
     );
@@ -333,7 +377,7 @@ export default function TopicPageSeoPage() {
         <Box sx={{ mb: 2 }}>
           <Box sx={{ p: 2, bgcolor: '#fffbe6', border: '1px solid #ffe58f', borderRadius: 2 }}>
             <Typography color="#ad6800" fontWeight={600}>
-              You have view-only access. To make changes, contact your admin.
+              You have view-only access to Topic Page SEO. To make changes, contact your admin.
             </Typography>
           </Box>
         </Box>
@@ -343,10 +387,10 @@ export default function TopicPageSeoPage() {
       <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
         <Box>
           <Typography variant="h5" sx={{ fontWeight: 600, mb: 0.5 }}>
-            🔍 Static SEO Management
+            📑 Topic Page SEO
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Manage your static SEO entries with advanced filtering and sorting
+            Manage SEO for your static & topic pages with advanced filtering and sorting
           </Typography>
         </Box>
 
@@ -369,7 +413,7 @@ export default function TopicPageSeoPage() {
             onClick={handleAdd}
             disabled={pageAccess === 'only view'}
           >
-            Add New SEO Entry
+            Add Topic Page SEO
           </Button>
         </Box>
       </Box>
@@ -391,8 +435,8 @@ export default function TopicPageSeoPage() {
           enableColumnFilters
           enableColumnManagement
           rowsPerPage={15}
-          searchPlaceholder="Search by name, slug, meta title..."
-          storageKey="static-seo-table"
+          searchPlaceholder="Search by topic page name, slug, meta title..."
+          storageKey="topic-page-seo-table"
         />
       )}
 
